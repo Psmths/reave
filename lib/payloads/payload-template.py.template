@@ -1,0 +1,35 @@
+class Payload:
+
+    def __init__(self):
+
+        self.info = {
+            'name': '(esx|proxmox|any)-payload-name',
+            'description': 'Description of what the payload will do',
+            'date': '1970-01-01',
+            'author': 'My Name',
+            'compatibility': 'ESXi Version, Proxmox Version'
+        }
+
+        self.options = {
+            'my_payload_option': {
+                'required': True,
+                'info': 'What is this option for',
+                'defaults': None,
+                'value': ''
+            }
+        }
+
+        # Set payload options to defaults
+        for option, value in self.options.items():
+            value['value'] = value['defaults']
+
+    def gen_payload(self):
+
+        my_payload_option = self.options['my_payload_option']['value']
+
+        payload_script = """
+import os
+os.system('echo %(my_payload_option)s')
+        """ % {'my_payload_option': my_payload_option}
+
+        return payload_script
