@@ -51,7 +51,6 @@ class Listener():
         lastseen = time.time()
         tmp_agent = Agent(self, agent_uuid, lastseen)
         self.agents[agent_uuid] = tmp_agent
-        logging.warning('Agent associated!')
         connection.send('_response{"status" : "ACK"}'.encode())
         connection.close()
 

@@ -37,6 +37,18 @@ class ESXEXP(cmd.Cmd):
     agent = None
     prompt = '> ' 
 
+    def __init__(self):
+        cmd.Cmd.__init__(self)
+        readline.set_completer_delims(' ')
+
+    def complete_interact(self, text, line, begidx, endidx):
+        if self.context == 'agent':
+            return [i for i, a in agents_dict.items() if i.startswith(text)]
+            
+    def complete_use(self, text, line, begidx, endidx):
+        if self.context == 'payload':
+            return [i for i in payloads.loaded_payloads if i.startswith(text)]
+
     def do_help(self,cmd):
         if self.context:
             context_help(self.context.split(' ')[0])
@@ -91,6 +103,19 @@ class ESXEXP(cmd.Cmd):
         self.add_listener(host,port,secret)
 
     def do_list(self, cmd):
+        try:
+            assert self.context != None
+        except:
+            print('No context specified')
+            return
+        if self.context == 'listener':
+            self.list_listener()
+        if self.context == 'payload':
+            self.list_payload()
+        if self.context == 'agent':
+            self.list_agent()
+
+    def do_ls(self, cmd):
         try:
             assert self.context != None
         except:
@@ -192,7 +217,14 @@ class ESXEXP(cmd.Cmd):
         except:
             print('Invalid option selected!')
             return
-        self.payload.options[option]['value'] = value
+        if value == 'False' or value == 'false':
+            self.payload.options[option]['value'] = False
+        elif value == 'True' or value == 'true':
+            self.payload.options[option]['value'] = True
+        elif value == 'None' or value == 'none':
+            self.payload.options[option]['value'] = None 
+        else:
+            self.payload.options[option]['value'] = value
 
     def do_run(self,cmd):
         try:
@@ -257,7 +289,7 @@ class ESXEXP(cmd.Cmd):
         for uuid, agent in agents_dict.items():
             table.add_row(
                 uuid,
-                str(agent.lastseen)
+                '[red]' + str(agent.lastseen) + '[/red]'
             )
         console.print(table)
 
