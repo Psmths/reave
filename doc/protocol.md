@@ -13,11 +13,11 @@ The protocol leverages TCP for transmission.
 The `_associate` packet is used at the start of a new agent onboarding. It will provide the listener with the agent's secret phrase, and the agent's UUID. If the agent has sent the correct secret phrase to the listener, the listener instance will register the agent, which can then proceed to beaconing. The association packet looks like this:
 
 ```
-_associate{"secret": "mysecret", "uuid": "f3c71828f0b542d6d58030f089fdfdc7"}
+_associate{"secret": "mysecret", "uuid": "f3c71828f0b542d6d58030f089fdfdc7", enumdata: <dict>}
 ```
 
 
-The expected response to a successful association process is a status OK response packet, which looks like:
+The expected response to a successful association process is a status ACK response packet, which looks like:
 
 ```
 _response{"status" : "ACK"}

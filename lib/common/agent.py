@@ -6,12 +6,13 @@ class Agent():
     """
     Agent class holds stateful data about an agent.
     """
-    def __init__(self, listener, uuid, lastseen):
+    def __init__(self, listener, uuid, lastseen, enumdata):
         self.listener = listener
         self.uuid = uuid
         self.command_queue = Queue()
         self.payload_queue = Queue()
         self.lastseen = lastseen
+        self.enumdata = enumdata
 
     def update_lastseen(self):
         self.lastseen = time.time()

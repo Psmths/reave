@@ -13,14 +13,10 @@ from lib.common.payloads import Payloads
 from lib.common.cmdhelp import cmd_help, context_help
 from lib.common.termcolor import colors
 
-agents_dict = {}
-listeners = []
-payloads = Payloads()
-logging.basicConfig(format='%(message)s')
-logging.getLogger().setLevel(logging.INFO)
 
 _CMD_HISTFILE = '.reave_history'
 _CMD_HISTFILE_SIZE = 1000
+_LOGFILE = '.reave_log'
 
 def handler(signal_received, frame):
     logging.info('Shutting down all listeners...')
@@ -31,7 +27,7 @@ def handler(signal_received, frame):
     logging.info('Shutting down...')
     exit(0)
 
-class ESXEXP(cmd.Cmd):
+class MainMenu(cmd.Cmd):
     context = None
     payload = None
     agent = None
@@ -303,7 +299,25 @@ class ESXEXP(cmd.Cmd):
 
 
 if __name__ == '__main__':
-    logging.info("""
+
+    logging.basicConfig(filename=_LOGFILE, filemode='a', format='%(asctime)s [%(levelname)s] [%(module)s] %(message)s')
+    logging.getLogger().setLevel(logging.DEBUG)
+    
+    agents_dict = {}
+    listeners = []
+    payloads = Payloads()
+
+    logging.info('Starting REAVE...')
+
+    payloads.load_payloads()
+
+    signal(SIGINT, handler)
+
+    if os.path.exists(_CMD_HISTFILE):
+        readline.read_history_file(_CMD_HISTFILE)
+    console = Console()
+
+    console.print("""[yellow]
     ██████╗ ███████╗ █████╗ ██╗   ██╗███████╗
     ██╔══██╗██╔════╝██╔══██╗██║   ██║██╔════╝
     ██████╔╝█████╗  ███████║██║   ██║█████╗  
@@ -311,10 +325,6 @@ if __name__ == '__main__':
     ██║  ██║███████╗██║  ██║ ╚████╔╝ ███████╗
     ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚══════╝
     ~ Hypervisor Post-Exploit Framework ~
-        """)
-    payloads.load_payloads()
-    signal(SIGINT, handler)
-    if os.path.exists(_CMD_HISTFILE):
-        readline.read_history_file(_CMD_HISTFILE)
-    console = Console()
-    ESXEXP().cmdloop()
+        [/yellow]""")
+    
+    MainMenu().cmdloop()

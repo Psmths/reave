@@ -1,24 +1,29 @@
 import imp
 import os
+import logging
 from pathlib import Path
 from rich.console import Console
 from rich.table import Column, Table
 from lib.common.termcolor import colors
 
+
+
 class Payloads:
     def __init__(self):
         self.loaded_payloads = {}
+        self.logger = logging.getLogger(__name__)
     
     def load_payloads(self):
-        print('[ :) ] Loading payloads...')
+        logging.info('Loading payloads')
         root_path = self.get_root()
         payload_path = root_path/'lib'/'payloads'
         for root, dirs, files in os.walk(payload_path):
             for file in files:
                 if file.endswith(".py"):
+                    logging.debug('Found payload file: ' + file)
                     payload_name = file
                     self.loaded_payloads[payload_name] = imp.load_source(payload_name,root+'/'+file).Payload()
-        print('[ :) ] Loaded ' + str(len(self.loaded_payloads)) + ' payload scripts!')
+        logging.info('Loaded ' + str(len(self.loaded_payloads)) + ' payload scripts!')
 
     def get_root(self) -> Path:
         return Path(__file__).parent.parent.parent

@@ -8,7 +8,7 @@ class Payload:
 
         self.info = {
             'name': 'any_get_login_history',
-            'description': 'Get successful login attempts from host logs',
+            'description': 'Get successful login attempts from auth logs',
             'date': '2021-12-12',
             'author': 'PSMTHS',
             'compatibility': 'ESXi 6.7 EP 15,  Proxmox VE 4.0'
@@ -29,7 +29,7 @@ class Payload:
 
         payload_script = """
 import os
-os.system('cat /var/log/auth.log | grep -E '(Accepted)' | grep -E '(for)'')
+os.system('cat /var/log/auth.log | grep -E Accepted | grep -E for')
         """
 
         return payload_script

