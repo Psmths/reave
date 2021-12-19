@@ -8,6 +8,7 @@ import time
 import base64
 import datetime
 import logging
+import os
 from random import randrange
 
 _LISTENER_HOST = 'localhost'
@@ -35,20 +36,46 @@ def enum_host():
     logging.debug('Enumerating host')
     host_platform = platform.platform()
     host_name = socket.gethostname()
-    #with open('/proc/uptime', 'r') as f:
-        #host_uptime = float(f.readline().split()[0])
     
     host_data = {
         'host_platform': host_platform,
         'host_name': host_name
-        #'host_uptime': host_uptime
     }
 
     enumdata = {
         'host_data': host_data,
         'agent_max_beacon_interval': _AGENT_BEACON_INTERVAL + _AGENT_BEACON_JITTER
     }
+
+    if 'VMkernel' in host_platform:
+        logging.debug('Beginning platform-specific ESXi enumeration')
+
+        logging.debug('Enumerating mounts')
+        host_mounts = {}
+        m_fs_mounts = os.popen('esxcli storage filesystem list | grep ^/').read()
+        for entry in m_fs_mounts.splitlines():
+            entry = entry.split()
+            m_mountpoint = entry[0]
+            m_handle = entry[1]
+            m_uuid = entry[2]
+            m_type = entry[4]
+            m_size = entry[5]
+            m_free = entry[6]
+            host_mounts[m_uuid] = {
+                'mountpoint': m_mountpoint,
+                'name': m_handle,
+                'type': m_type,
+                'size': m_size,
+                'free': m_free,
+            }
+        host_data['host_mounts'] = host_mounts
+
+        
+
+
+
     logging.debug(enumdata)
+
     return enumdata
 
 

@@ -5,6 +5,7 @@ import logging
 import readline
 from signal import signal, SIGINT
 from sys import exit
+from rich import print
 from rich.console import Console
 from rich.table import Column, Table
 from lib.common.listener import Listener
@@ -145,7 +146,7 @@ class MainMenu(cmd.Cmd):
         
         print('Entering interactive session. Type quit to end session.')
         while True:
-            interactive_cmd = input(uuid + ' > ')
+            interactive_cmd = input(uuid[0:7] + ' > ')
             if interactive_cmd == 'quit': break
             agents_dict[uuid].add_command(interactive_cmd)
 
@@ -170,24 +171,40 @@ class MainMenu(cmd.Cmd):
 
     def do_info(self,cmd):
         try:
-            assert self.context == 'payload'
+            assert self.context == 'payload' or self.context == 'agent'
         except:
             print('wrong context')
             return
-        if not self.payload:
+        if self.context == 'payload':
+            if not self.payload:
+                try:
+                    assert len(cmd.split()) == 1
+                except:
+                    cmd_help('payload', 'info')
+                    return
+                cmd = cmd.split()
+                p = payloads.get_payload_by_name(cmd[0])
+                if p:
+                    payloads.print_payloads_info(p)
+                else:
+                    print('Payload not found!')
+            else:
+                payloads.print_payloads_info(self.payload)
+        if self.context == 'agent':
             try:
                 assert len(cmd.split()) == 1
             except:
-                cmd_help('payload', 'info')
+                cmd_help('agent', 'info')
                 return
             cmd = cmd.split()
-            p = payloads.get_payload_by_name(cmd[0])
-            if p:
-                payloads.print_payloads_info(p)
-            else:
-                print('Payload not found!')
-        else:
-            payloads.print_payloads_info(self.payload)
+            uuid = cmd[0]
+            try:
+                assert uuid in agents_dict
+            except:
+                print('Agent not found!')
+                return
+            print(agents_dict[uuid].enumdata)
+
 
     def do_set(self,cmd):
         try:

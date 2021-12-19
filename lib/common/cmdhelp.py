@@ -11,6 +11,7 @@ doc = {
     },
     'agent': {
         'list': ['list', 'List all registered agents.'],
+        'info': ['info <uuid>', 'List agent info, including any auto-enumerated data'],
         'interact': ['interact', 'Enter interactive command line. "quit" to exit'],
         'create': ['create', 'Start creating a new agent script.']
     },
