@@ -37,9 +37,9 @@ class Payload:
 
     def gen_payload(self):
 
-        userrealname = self.options['userrealname']['Value']
-        username = self.options['username']['Value']
-        password = self.options['password']['Value']
+        userrealname = self.options['userrealname']['value']
+        username = self.options['username']['value']
+        password = self.options['password']['value']
 
         payload_script = """
 import os

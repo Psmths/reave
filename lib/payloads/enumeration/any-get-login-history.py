@@ -7,7 +7,7 @@ class Payload:
     def __init__(self):
 
         self.info = {
-            'name': 'any_get_login_history',
+            'name': 'any-get-login-history',
             'description': 'Get successful login attempts from auth logs',
             'date': '2021-12-12',
             'author': 'PSMTHS',
