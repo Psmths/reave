@@ -45,7 +45,8 @@ def enum_host():
     }
 
     enumdata = {
-        'host_data': host_data
+        'host_data': host_data,
+        'agent_max_beacon_interval': _AGENT_BEACON_INTERVAL + _AGENT_BEACON_JITTER
     }
     logging.debug(enumdata)
     return enumdata

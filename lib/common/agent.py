@@ -14,6 +14,12 @@ class Agent():
         self.lastseen = lastseen
         self.enumdata = enumdata
 
+    def get_platform(self):
+        return self.enumdata['host_data']['host_platform']
+
+    def get_hostname(self):
+        return self.enumdata['host_data']['host_name']
+
     def update_lastseen(self):
         self.lastseen = time.time()
 

@@ -282,10 +282,14 @@ class MainMenu(cmd.Cmd):
         table = Table(show_header=True, header_style="bold magenta")
         table.add_column("UUID")
         table.add_column("Last Observed")
+        table.add_column("Platform")
+        table.add_column("Hostname")
         for uuid, agent in agents_dict.items():
             table.add_row(
                 uuid,
-                '[red]' + str(agent.lastseen) + '[/red]'
+                '[green]' + str(agent.lastseen) + '[/green]',
+                'Proxmox' if 'pve' in agent.get_platform() else 'ESX/i',
+                agent.get_hostname()
             )
         console.print(table)
 
