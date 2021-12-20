@@ -1,10 +1,10 @@
-import imp
 import os
+import imp
 import logging
+from rich import print
 from pathlib import Path
 from rich.console import Console
 from rich.table import Column, Table
-from rich import print
 
 
 class Payloads:

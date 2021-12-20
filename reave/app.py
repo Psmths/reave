@@ -1,11 +1,11 @@
 import os 
-import threading
-import readline
 import logging
-from signal import signal, SIGINT
+import readline
+import threading
 from sys import exit
 from rich import print
 from rich.console import Console
+from signal import signal, SIGINT
 from common.payloads import Payloads
 from common.mainmenu import MainMenu
 

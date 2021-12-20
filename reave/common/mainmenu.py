@@ -2,10 +2,10 @@ import os
 import cmd
 import readline
 import threading
-from rich.table import Column, Table
-from rich.console import Console
-from common.listener import Listener
 from common.agent import Agent 
+from rich.console import Console
+from rich.table import Column, Table
+from common.listener import Listener
 from common.cmdhelp import cmd_help, context_help
 
 
