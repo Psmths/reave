@@ -24,6 +24,7 @@ To enter the agent context, use command `agent`. From there, several options are
 
 ```
 list                    List all agents
+info                    List agent info, including any auto-enumerated data
 interact <uuid>         Interactive terminal session with agent. 
                         'quit' to exit.
 create                  Start creating a new agent script.
