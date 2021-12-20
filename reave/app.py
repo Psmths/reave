@@ -1,4 +1,4 @@
-import os 
+import os
 import logging
 import readline
 import threading
@@ -9,30 +9,35 @@ from signal import signal, SIGINT
 from common.payloads import Payloads
 from common.mainmenu import MainMenu
 
-_LOGFILE = '.reave_log'
-_CMD_HISTFILE = '.reave_history'
+_LOGFILE = ".reave_log"
+_CMD_HISTFILE = ".reave_history"
 _CMD_HISTFILE_SIZE = 1000
 
+
 def handler(signal_received, frame):
-    logging.info('Shutting down all listeners...')
+    logging.info("Shutting down all listeners...")
     for listener in listeners:
         listener._kill()
     readline.set_history_length(_CMD_HISTFILE_SIZE)
     readline.write_history_file(_CMD_HISTFILE)
-    logging.info('Shutting down...')
+    logging.info("Shutting down...")
     exit(0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
-    logging.basicConfig(filename=_LOGFILE, filemode='a', format='%(asctime)s [%(levelname)s] [%(module)s] %(message)s')
+    logging.basicConfig(
+        filename=_LOGFILE,
+        filemode="a",
+        format="%(asctime)s [%(levelname)s] [%(module)s] %(message)s",
+    )
     logging.getLogger().setLevel(logging.DEBUG)
-    
+
     agents = {}
     listeners = []
     payloads = Payloads()
 
-    logging.info('Starting REAVE...')
+    logging.info("Starting REAVE...")
 
     payloads.load_payloads()
 
@@ -43,7 +48,8 @@ if __name__ == '__main__':
 
     console = Console()
 
-    console.print("""[yellow]
+    console.print(
+        """[yellow]
     ██████╗ ███████╗ █████╗ ██╗   ██╗███████╗
     ██╔══██╗██╔════╝██╔══██╗██║   ██║██╔════╝
     ██████╔╝█████╗  ███████║██║   ██║█████╗  
@@ -51,6 +57,7 @@ if __name__ == '__main__':
     ██║  ██║███████╗██║  ██║ ╚████╔╝ ███████╗
     ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚══════╝
     ~ Hypervisor Post-Exploit Framework ~
-        [/yellow]""")
-    
+        [/yellow]"""
+    )
+
     MainMenu(agents, listeners, payloads).cmdloop()

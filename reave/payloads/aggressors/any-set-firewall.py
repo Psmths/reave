@@ -1,31 +1,30 @@
 class Payload:
-
     def __init__(self):
 
         self.info = {
-            'name': 'any-set-firewall',
-            'description': 'Enable or disable the host firewall.',
-            'date': '2021-12-19',
-            'author': 'PSMTHS',
-            'compatibility': 'ESXi 6.7 EP 15,  Proxmox VE 4.0'
+            "name": "any-set-firewall",
+            "description": "Enable or disable the host firewall.",
+            "date": "2021-12-19",
+            "author": "PSMTHS",
+            "compatibility": "ESXi 6.7 EP 15,  Proxmox VE 4.0",
         }
 
         self.options = {
-            'status': {
-                'required': True,
-                'info': 'Set to True to enable host inbound firewall, False to disable.',
-                'defaults': True,
-                'value': ''
+            "status": {
+                "required": True,
+                "info": "Set to True to enable host inbound firewall, False to disable.",
+                "defaults": True,
+                "value": "",
             }
         }
 
         # Set payload options to defaults
         for option, value in self.options.items():
-            value['value'] = value['defaults']
+            value["value"] = value["defaults"]
 
     def gen_payload(self):
 
-        status = self.options['status']['value']
+        status = self.options["status"]["value"]
 
         payload_script = """
 import os
@@ -39,6 +38,8 @@ if '-pve' in host_platform:
         os.system('iptables -P INPUT ACCEPT')
     else:
         os.system('iptables -P INPUT DROP')
-        """ % {'setting': str(status)}
+        """ % {
+            "setting": str(status)
+        }
 
         return payload_script

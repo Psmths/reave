@@ -155,8 +155,8 @@ class Listener:
         self.wrapped_socket = ssl.wrap_socket(
             self.tcp_socket,
             server_side=True,
-            certfile="data/cert.pem",
-            keyfile="data/cert.pem",
+            certfile="reave/data/cert.pem",
+            keyfile="reave/data/cert.pem",
         )
 
         logging.debug(str(self.uuid) + " Listener listening...")

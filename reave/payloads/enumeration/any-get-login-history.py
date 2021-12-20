@@ -4,14 +4,15 @@ class Payload:
     the method gen_payload() to generate a payload with the appropriate
     user-selected options.
     """
+
     def __init__(self):
 
         self.info = {
-            'name': 'any-get-login-history',
-            'description': 'Get successful login attempts from auth logs',
-            'date': '2021-12-12',
-            'author': 'PSMTHS',
-            'compatibility': 'ESXi 6.7 EP 15,  Proxmox VE 4.0'
+            "name": "any-get-login-history",
+            "description": "Get successful login attempts from auth logs",
+            "date": "2021-12-12",
+            "author": "PSMTHS",
+            "compatibility": "ESXi 6.7 EP 15,  Proxmox VE 4.0",
         }
 
         self.options = {}
@@ -21,7 +22,7 @@ class Payload:
         Set payload options to defaults
         """
         for option, value in self.options.items():
-            value['value'] = value['defaults']
+            value["value"] = value["defaults"]
 
     def gen_payload(self):
 

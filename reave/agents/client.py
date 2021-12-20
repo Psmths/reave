@@ -61,6 +61,7 @@ def enum_host():
                 "free": m_free,
             }
         host_data["host_mounts"] = host_mounts
+
     logging.debug(enumdata)
     return enumdata
 

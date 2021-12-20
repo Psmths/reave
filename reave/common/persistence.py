@@ -1,6 +1,7 @@
 import tinydb
 
-class Persistence():
+
+class Persistence:
     """
     Persistence class is responsible for saving and restoring:
 
