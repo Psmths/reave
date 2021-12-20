@@ -6,8 +6,8 @@ import logging
 import base64
 import uuid
 from socket import socket, AF_INET, SOCK_STREAM, SO_REUSEADDR, SOL_SOCKET
-from lib.common.responses import serve_http
-from lib.common.agent import Agent
+from common.responses import serve_http
+from common.agent import Agent
 
 
 class Listener():
@@ -25,8 +25,7 @@ class Listener():
 
     def _kill(self):
         logging.debug(str(self.uuid) + ' Closing socket')
-        socket(AF_INET, 
-               SOCK_STREAM).connect((self.host, self.port))
+        socket(AF_INET, SOCK_STREAM).connect((self.host, self.port))
         self.tcp_socket.close()
 
     def get_response(self, json_stub, connection):

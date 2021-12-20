@@ -1,4 +1,4 @@
-from lib.common.termcolor import colors
+from rich import print
 
 doc = {
     'payload': {
@@ -23,18 +23,19 @@ doc = {
 }
 
 def cmd_help(context,command):
-    print(colors.YELLOW)
-    print(doc[context][command][0] + '\t' + doc[context][command][1])
-    print(colors.ENDC)
+    print( '[yellow]' +
+            doc[context][command][0] +
+           '\t' +
+           doc[context][command][1] +
+           '[/yellow]'
+         )
 
 def context_help(context):
     if context:
         for cmd, tooltip in doc[context].items():
-            print(colors.YELLOW + colors.BOLD + tooltip[0] + colors.ENDC + colors.YELLOW + colors.ITALIC + '\n\t' + tooltip[1] + '\n' + colors.ENDC)
+            print('[yellow][bold]' + tooltip[0] + '[/bold][italic]' + '\n\t' + tooltip[1] + '\n' + '[/italic][/yellow]')
     else:
-        print(colors.YELLOW)
-        print('Quickstart: https://github.com/Psmths/reave/blob/main/doc/commands.md\n')
-        print('Available contexts:')
+        print('[yellow]Quickstart: https://github.com/Psmths/reave/blob/main/doc/commands.md\n[/yellow]')
+        print('[yellow]Available contexts:[/yellow]')
         for cmd in doc:
-            print('\t' + cmd)
-        print(colors.ENDC)
+            print('[yellow]\t' + cmd + '[/yellow]')

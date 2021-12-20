@@ -1,4 +1,5 @@
 import time
+import datetime
 from queue import Queue
 
 
@@ -13,6 +14,22 @@ class Agent():
         self.payload_queue = Queue()
         self.lastseen = lastseen
         self.enumdata = enumdata
+
+    def beacon_expired(self):
+        """
+        Returns true if the beacon was expected, but was not received in a
+        timely manner. 
+        """
+        start_time = self.enumdata['agent_active_hr_start']
+        end_time = self.enumdata['agent_active_hr_end']
+        start_time = datetime.time(*map(int, start_time.split(':')))
+        end_time = datetime.time(*map(int, end_time.split(':')))
+        max_beacon_interval = self.enumdata['agent_max_beacon_interval']
+        if start_time <= datetime.datetime.now().time() < end_time:
+            if time.time() - max_beacon_interval > self.lastseen:
+                return True
+        return False 
+
 
     def get_platform(self):
         return self.enumdata['host_data']['host_platform']

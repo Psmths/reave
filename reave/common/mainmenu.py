@@ -1,50 +1,37 @@
-import os 
+import os
 import cmd
-import threading
-import logging
 import readline
-from signal import signal, SIGINT
-from sys import exit
-from rich import print
-from rich.console import Console
+import threading
 from rich.table import Column, Table
-from lib.common.listener import Listener
-from lib.common.agent import Agent 
-from lib.common.payloads import Payloads
-from lib.common.cmdhelp import cmd_help, context_help
-from lib.common.termcolor import colors
+from rich.console import Console
+from common.listener import Listener
+from common.agent import Agent 
+from common.cmdhelp import cmd_help, context_help
 
-
-_CMD_HISTFILE = '.reave_history'
-_CMD_HISTFILE_SIZE = 1000
-_LOGFILE = '.reave_log'
-
-def handler(signal_received, frame):
-    logging.info('Shutting down all listeners...')
-    for listener in listeners:
-        listener._kill()
-    readline.set_history_length(_CMD_HISTFILE_SIZE)
-    readline.write_history_file(_CMD_HISTFILE)
-    logging.info('Shutting down...')
-    exit(0)
 
 class MainMenu(cmd.Cmd):
-    context = None
-    payload = None
-    agent = None
-    prompt = '> ' 
 
-    def __init__(self):
+    def __init__(self, agents, listeners, payloads):
+
         cmd.Cmd.__init__(self)
         readline.set_completer_delims(' ')
 
+        self.agents = agents
+        self.listeners = listeners
+        self.payloads = payloads
+        self.console = Console()
+        self.context = None
+        self.payload = None
+        self.agent = None
+        self.prompt = '> '        
+
     def complete_interact(self, text, line, begidx, endidx):
         if self.context == 'agent':
-            return [i for i, a in agents_dict.items() if i.startswith(text)]
+            return [i for i, a in self.agents.items() if i.startswith(text)]
             
     def complete_use(self, text, line, begidx, endidx):
         if self.context == 'payload':
-            return [i for i in payloads.loaded_payloads if i.startswith(text)]
+            return [i for i in self.payloads.loaded_payloads if i.startswith(text)]
 
     def do_help(self,cmd):
         if self.context:
@@ -113,17 +100,7 @@ class MainMenu(cmd.Cmd):
             self.list_agent()
 
     def do_ls(self, cmd):
-        try:
-            assert self.context != None
-        except:
-            print('No context specified')
-            return
-        if self.context == 'listener':
-            self.list_listener()
-        if self.context == 'payload':
-            self.list_payload()
-        if self.context == 'agent':
-            self.list_agent()
+        self.do_list(cmd)
 
     def do_interact(self, cmd):
         try:
@@ -139,7 +116,7 @@ class MainMenu(cmd.Cmd):
         cmd = cmd.split()
         uuid = cmd[0]
         try:
-            assert uuid in agents_dict
+            assert uuid in self.agents
         except:
             print('Agent not found!')
             return
@@ -148,7 +125,7 @@ class MainMenu(cmd.Cmd):
         while True:
             interactive_cmd = input(uuid[0:7] + ' > ')
             if interactive_cmd == 'quit': break
-            agents_dict[uuid].add_command(interactive_cmd)
+            self.agents[uuid].add_command(interactive_cmd)
 
     def do_use(self,cmd):
         try:
@@ -163,7 +140,7 @@ class MainMenu(cmd.Cmd):
             return
         cmd = cmd.split()
         payload_name = cmd[0]
-        self.payload = payloads.get_payload_by_name(payload_name)
+        self.payload = self.payloads.get_payload_by_name(payload_name)
         if self.payload:
             self.update_prompt()
         else:
@@ -183,13 +160,13 @@ class MainMenu(cmd.Cmd):
                     cmd_help('payload', 'info')
                     return
                 cmd = cmd.split()
-                p = payloads.get_payload_by_name(cmd[0])
+                p = self.payloads.get_payload_by_name(cmd[0])
                 if p:
-                    payloads.print_payloads_info(p)
+                    self.payloads.print_payloads_info(p)
                 else:
                     print('Payload not found!')
             else:
-                payloads.print_payloads_info(self.payload)
+                self.payloads.print_payloads_info(self.payload)
         if self.context == 'agent':
             try:
                 assert len(cmd.split()) == 1
@@ -199,11 +176,11 @@ class MainMenu(cmd.Cmd):
             cmd = cmd.split()
             uuid = cmd[0]
             try:
-                assert uuid in agents_dict
+                assert uuid in self.agents
             except:
                 print('Agent not found!')
                 return
-            print(agents_dict[uuid].enumdata)
+            print(self.agents[uuid].enumdata)
 
 
     def do_set(self,cmd):
@@ -261,11 +238,11 @@ class MainMenu(cmd.Cmd):
         if cmd[0] == 'agent':
             uuid = cmd[1]
             try:
-                assert uuid in agents_dict
+                assert uuid in self.agents
             except:
                 print('Agent not found!')
                 return
-            agents_dict[uuid].add_payload(script)
+            self.agents[uuid].add_payload(script)
 
 
     def list_listener(self):
@@ -274,26 +251,26 @@ class MainMenu(cmd.Cmd):
         table.add_column("Listen Host")
         table.add_column("Listen Port")
         table.add_column("Secret Key")
-        for listener in listeners:
+        for listener in self.listeners:
             table.add_row(
                 str(listener.uuid),
                 listener.host,
                 str(listener.port),
                 listener.secret
             )
-        console.print(table)
+        self.console.print(table)
 
 
     def list_payload(self):
         table = Table(show_header=True, header_style="bold magenta")
         table.add_column("Name")
         table.add_column("Description")
-        for payload_name, payload in payloads.loaded_payloads.items():
+        for payload_name, payload in self.payloads.loaded_payloads.items():
             table.add_row(
                 payload_name,
                 payload.info['description']
             )
-        console.print(table)
+        self.console.print(table)
 
     def list_agent(self):
         table = Table(show_header=True, header_style="bold magenta")
@@ -301,51 +278,23 @@ class MainMenu(cmd.Cmd):
         table.add_column("Last Observed")
         table.add_column("Platform")
         table.add_column("Hostname")
-        for uuid, agent in agents_dict.items():
+        for uuid, agent in self.agents.items():
+            a_status = '[green]' + str(agent.lastseen) + '[/green]'
+            if agent.beacon_expired():
+                a_status = '[red](!) ' + str(agent.lastseen) + '[/red]'
+
             table.add_row(
                 uuid,
-                '[green]' + str(agent.lastseen) + '[/green]',
+                a_status,
                 'Proxmox' if 'pve' in agent.get_platform() else 'ESX/i',
                 agent.get_hostname()
             )
-        console.print(table)
+        self.console.print(table)
 
     def add_listener(self, host, port, secret):
         l = Listener(port,
                     host,
                     secret, 
-                    agents_dict,
-                    listeners)
+                    self.agents,
+                    self.listeners)
         threading.Thread(target=l.main_thread).start()
-
-
-if __name__ == '__main__':
-
-    logging.basicConfig(filename=_LOGFILE, filemode='a', format='%(asctime)s [%(levelname)s] [%(module)s] %(message)s')
-    logging.getLogger().setLevel(logging.DEBUG)
-    
-    agents_dict = {}
-    listeners = []
-    payloads = Payloads()
-
-    logging.info('Starting REAVE...')
-
-    payloads.load_payloads()
-
-    signal(SIGINT, handler)
-
-    if os.path.exists(_CMD_HISTFILE):
-        readline.read_history_file(_CMD_HISTFILE)
-    console = Console()
-
-    console.print("""[yellow]
-    ██████╗ ███████╗ █████╗ ██╗   ██╗███████╗
-    ██╔══██╗██╔════╝██╔══██╗██║   ██║██╔════╝
-    ██████╔╝█████╗  ███████║██║   ██║█████╗  
-    ██╔══██╗██╔══╝  ██╔══██║╚██╗ ██╔╝██╔══╝  
-    ██║  ██║███████╗██║  ██║ ╚████╔╝ ███████╗
-    ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚══════╝
-    ~ Hypervisor Post-Exploit Framework ~
-        [/yellow]""")
-    
-    MainMenu().cmdloop()

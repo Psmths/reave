@@ -44,7 +44,9 @@ def enum_host():
 
     enumdata = {
         'host_data': host_data,
-        'agent_max_beacon_interval': _AGENT_BEACON_INTERVAL + _AGENT_BEACON_JITTER
+        'agent_max_beacon_interval': _AGENT_BEACON_INTERVAL + _AGENT_BEACON_JITTER,
+        'agent_active_hr_start': str(_AGENT_START_TIME),
+        'agent_active_hr_end': str(_AGENT_END_TIME)
     }
 
     if 'VMkernel' in host_platform:

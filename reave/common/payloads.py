@@ -4,8 +4,7 @@ import logging
 from pathlib import Path
 from rich.console import Console
 from rich.table import Column, Table
-from lib.common.termcolor import colors
-
+from rich import print
 
 
 class Payloads:
@@ -16,7 +15,7 @@ class Payloads:
     def load_payloads(self):
         logging.info('Loading payloads')
         root_path = self.get_root()
-        payload_path = root_path/'lib'/'payloads'
+        payload_path = root_path/'reave'/'payloads'
         for root, dirs, files in os.walk(payload_path):
             for file in files:
                 if file.endswith(".py"):
