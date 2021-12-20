@@ -20,7 +20,6 @@ _AGENT_BEACON_INTERVAL = 0.1
 _AGENT_BEACON_JITTER = 2
 _AGENT_START_TIME = datetime.time(0, 0, 0)
 _AGENT_END_TIME = datetime.time(23, 59, 0)
-_AGENT_CIPHERS = "AES128-SHA"
 _AGENT_SOCKET_TIMEOUT = 2
 _AGENT_LOGLEVEL = logging.DEBUG
 _AGENT_PID_FILE_LOCATION = "/tmp/agent.pid"
@@ -85,7 +84,7 @@ def tls_transact_msg(msg):
     """
     logging.debug("Preparing to send packet")
     context = ssl.create_default_context()
-    context.set_ciphers(_AGENT_CIPHERS)
+    context.minimum_version = ssl.TLSVersion.TLSv1_2
     context.check_hostname = False
     context.verify_mode = ssl.CERT_NONE
     try:
