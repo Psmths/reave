@@ -23,7 +23,7 @@ _AGENT_END_TIME = datetime.time(23, 59, 0)
 _AGENT_CIPHERS = "AES128-SHA"
 _AGENT_SOCKET_TIMEOUT = 2
 _AGENT_LOGLEVEL = logging.DEBUG
-_AGENT_PID_FILE_LOCATION = "/tmp/client.pid"
+_AGENT_PID_FILE_LOCATION = "/tmp/agent.pid"
 
 
 def enum_host():
