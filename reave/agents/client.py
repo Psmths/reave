@@ -61,6 +61,18 @@ def enum_host():
             }
         host_data["host_mounts"] = host_mounts
 
+        logging.debug("Enumerating local users")
+        host_local_users = {}
+        l_users = os.popen("esxcli system account list").read()
+        for entry in l_users.splitlines()[2:]:
+            entry = entry.split()
+            u_name = entry[0]
+            u_desc = entry[1]
+            host_local_users[u_name] = {
+                "description": u_desc
+            }
+        host_data["host_local_users"] = host_local_users
+
     logging.debug(enumdata)
     return enumdata
 
@@ -72,7 +84,7 @@ def get_uuid():
     """
     logging.debug("Generating UUID")
     uuid_components = [socket.gethostname()]
-    agent_uuid = hashlib.md5("".join(uuid_components).encode()).hexdigest()
+    agent_uuid = hashlib.sha224("".join(uuid_components).encode()).hexdigest()[0:4]
     logging.debug(agent_uuid)
     return agent_uuid
 

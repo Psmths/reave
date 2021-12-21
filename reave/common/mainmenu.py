@@ -281,6 +281,20 @@ class MainMenu(cmd.Cmd):
         self.console.print(table)
 
     def agent_info(self, agent):
+        if "host_local_users" in agent.enumdata["host_data"]:
+            table = Table(
+                show_header=True, header_style="bold magenta", title="Local Users"
+            )
+            table.add_column("Username")
+            table.add_column("User Description")
+            host_local_users = agent.enumdata["host_data"]["host_local_users"]
+            for uname, user in host_local_users.items():
+                table.add_row(
+                    uname,
+                    user["description"]
+                )
+            self.console.print(table)
+
         if "host_mounts" in agent.enumdata["host_data"]:
             table = Table(
                 show_header=True, header_style="bold magenta", title="Mountpoints"
