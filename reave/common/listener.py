@@ -156,6 +156,7 @@ class Listener(object):
                 # Upgrade socket to TLS
                 context = ssl.SSLContext()
                 context.maximum_version = ssl.TLSVersion.TLSv1_2
+                context.minimum_version = ssl.TLSVersion.TLSv1_2
                 context.verify_mode = ssl.CERT_OPTIONAL
                 context.load_cert_chain("reave/data/cert.pem")
                 wrapped_socket = context.wrap_socket(
@@ -180,7 +181,6 @@ class Listener(object):
             try:
                 data = client.recv(size)
                 if data:
-                    # Set the response to echo back the recieved data
                     response = self.handle_proto_msg(data.decode())
                     if response:
                         client.send(response)

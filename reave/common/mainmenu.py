@@ -322,3 +322,4 @@ class MainMenu(cmd.Cmd):
             port, host, secret, self.agents, self.listeners, self._keyboard_interrupt
         )
         threading.Thread(target=l.main_thread).start()
+        self.listeners.append(l)

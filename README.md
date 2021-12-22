@@ -26,8 +26,8 @@ The goal of Reave is to provide a framework one can leverage to automate and exp
 ![screenshot](doc/listener_context.PNG)
 ### Payload context
 ![screenshot](doc/payload_context.PNG)
-### Interactive agent session
-![screenshot](doc/agent_session.PNG)
+### Automatic Enumeration
+![screenshot](doc/agent_autoenum.PNG)
 
 # Command Line Interface
 
