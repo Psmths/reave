@@ -294,7 +294,5 @@ if __name__ == "__main__":
         sys.exit(0)
     else:
         logging.debug("Launching agent")
-        agent.init_socket()
-        agent.send_file("/tmp/in.bin")
         agent.write_pid_file()
         agent.run()
