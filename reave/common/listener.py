@@ -7,6 +7,7 @@ import time
 import json
 import base64
 from common.agent import Agent
+from common.responses import serve_http
 
 
 class Listener(object):
@@ -146,7 +147,7 @@ class Listener(object):
             except KeyError:
                 return False
         else:
-            return False
+            return serve_http(proto_msg)
         return
 
     def main_thread(self):
