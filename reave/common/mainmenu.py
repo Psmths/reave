@@ -10,7 +10,7 @@ from common.cmdhelp import cmd_help, context_help
 
 
 class MainMenu(cmd.Cmd):
-    def __init__(self, agents, listeners, payloads):
+    def __init__(self, agents, listeners, payloads, _keyboard_interrupt):
 
         cmd.Cmd.__init__(self)
         readline.set_completer_delims(" ")
@@ -23,6 +23,7 @@ class MainMenu(cmd.Cmd):
         self.payload = None
         self.agent = None
         self.prompt = "> "
+        self._keyboard_interrupt = _keyboard_interrupt
 
     def complete_interact(self, text, line, begidx, endidx):
         if self.context == "agent":
@@ -289,10 +290,7 @@ class MainMenu(cmd.Cmd):
             table.add_column("User Description")
             host_local_users = agent.enumdata["host_data"]["host_local_users"]
             for uname, user in host_local_users.items():
-                table.add_row(
-                    uname,
-                    user["description"]
-                )
+                table.add_row(uname, user["description"])
             self.console.print(table)
 
         if "host_mounts" in agent.enumdata["host_data"]:
@@ -320,5 +318,7 @@ class MainMenu(cmd.Cmd):
             self.console.print(table)
 
     def add_listener(self, host, port, secret):
-        l = Listener(port, host, secret, self.agents, self.listeners)
+        l = Listener(
+            port, host, secret, self.agents, self.listeners, self._keyboard_interrupt
+        )
         threading.Thread(target=l.main_thread).start()

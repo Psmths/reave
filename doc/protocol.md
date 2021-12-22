@@ -49,7 +49,19 @@ _response{"status": "OK", "command": F`(W)AKWR5, "payload": null}
 `_response` packets are used for general responses, bidirectionally. For instance, when the agent has executed a command and has output data for the listener, it will send a packet like this:
 
 ```
-_response{"status": "OK", "d": F`(W)AKWR5, "payload": null}
+_response{"status": "OK", "data": F`(W)AKWR5}
+```
+
+`_response` packets are also used for binary file transfers:
+
+```
+_response{ "status": "DATA", 
+           "data": "F`(W)AKWR5..."
+           "filename": "example.bin",
+           "offset": n,
+           "chunk_size": s
+           "file_name": filename
+         }
 ```
 
 ## Example Flow
