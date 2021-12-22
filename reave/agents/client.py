@@ -1,6 +1,7 @@
 import os
 import sys
 import ssl
+import zlib
 import json
 import time
 import socket
@@ -183,6 +184,7 @@ class Agent:
             chunk_data = file.read(_AGENT_FILE_TRANSFER_BLOCK_SIZE)
             if not chunk_data:
                 break
+            chunk_data = zlib.compress(chunk_data)
             chunk_data = base64.b85encode(chunk_data).decode()
             self.send_file_segment(chunk_data, offset, os.path.basename(filename))
             offset = offset + _AGENT_FILE_TRANSFER_BLOCK_SIZE
@@ -292,5 +294,7 @@ if __name__ == "__main__":
         sys.exit(0)
     else:
         logging.debug("Launching agent")
+        agent.init_socket()
+        agent.send_file("/tmp/in.bin")
         agent.write_pid_file()
         agent.run()

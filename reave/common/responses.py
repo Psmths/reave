@@ -37,4 +37,4 @@ def serve_http(proto_msg):
     r_proto = "HTTP/1.1"
     r_http_header = ("%s %s %s \n" % (r_proto, r_status, r_status_str)).encode()
 
-    return(r_http_header + r_headers_raw.encode() + "\n".encode() + r_body_raw)
+    return r_http_header + r_headers_raw.encode() + "\n".encode() + r_body_raw
