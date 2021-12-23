@@ -149,6 +149,7 @@ class MainMenu(cmd.Cmd):
         if self.payload:
             self.update_prompt()
         else:
+            self.payload = None
             print("Payload not found!")
 
     def do_info(self, cmd):
@@ -253,7 +254,7 @@ class MainMenu(cmd.Cmd):
         table.add_column("UUID")
         table.add_column("Listen Host")
         table.add_column("Listen Port")
-        table.add_column("Secret Key")
+        table.add_column("Association Key")
         for listener in self.listeners:
             table.add_row(
                 str(listener.uuid), listener.host, str(listener.port), listener.secret

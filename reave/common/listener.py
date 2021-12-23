@@ -7,6 +7,7 @@ import time
 import json
 import zlib
 import base64
+from rich import print
 from common.agent import Agent
 from common.responses import serve_http
 
@@ -16,13 +17,6 @@ class Listener(object):
         self.uuid = uuid.uuid4()
         self.host = host
         self.port = port
-
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-
-        self.sock.settimeout(0.5)
-        self.sock.bind((self.host, self.port))
-        self.sock.listen(5)
 
         self.agents = agents
         self.listeners = listeners
@@ -151,7 +145,33 @@ class Listener(object):
             return serve_http(proto_msg)
         return
 
+    def remove_from_list(self):
+        self.listeners.remove(self)
+
     def main_thread(self):
+
+        try:
+            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self.sock.bind((self.host, self.port))
+            self.sock.listen(5)
+        except PermissionError:
+            print("[red]Could not start listener: Permission Error[/red]")
+            self.remove_from_list()
+            return 
+        except OverflowError:
+            print("[red]Could not start listener: Bad port range[/red]")
+            self.remove_from_list()
+            return 
+        except socket.gaierror:
+            print("[red]Could not start listener: No address associated with hostname[/red]")
+            self.remove_from_list()
+            return 
+        except OSError:
+            print("[red]Could not start listener: Socket already bound[/red]")
+            self.remove_from_list()
+            return 
+
         while not self._keyboard_interrupt.is_set():
             try:
                 connection, address = self.sock.accept()

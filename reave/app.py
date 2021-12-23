@@ -17,7 +17,7 @@ _keyboard_interrupt = threading.Event()
 
 def handler(signal_received, frame):
     print(
-        "[bold][red]Please wait for gracefule shutdown of active listeners...[/red][/bold]"
+        "[bold][red]Please wait for graceful shutdown of active listeners...[/red][/bold]"
     )
     logging.info("Shutting down all listeners...")
     _keyboard_interrupt.set()
@@ -59,8 +59,11 @@ if __name__ == "__main__":
     ██╔══██╗██╔══╝  ██╔══██║╚██╗ ██╔╝██╔══╝  
     ██║  ██║███████╗██║  ██║ ╚████╔╝ ███████╗
     ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚══════╝
-    ~ Hypervisor Post-Exploit Framework ~
+      ~ Hypervisor Post-Exploit Framework ~
+
         [/yellow]"""
     )
+
+    #console.print("[yellow]\tPayloads loaded: " + str(len(payloads.loaded_payloads)) + "[/yellow]")
 
     MainMenu(agents, listeners, payloads, _keyboard_interrupt).cmdloop()
