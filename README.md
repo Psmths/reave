@@ -1,9 +1,14 @@
-# REAVE
+<p align="center">
+  <h2 align="center">REAVE</h2>
+</p>
 
-![](https://img.shields.io/badge/Maintained%3F-yes-green.svg)
-[![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![CodeQL](https://github.com/Psmths/reave/workflows/CodeQL/badge.svg?branch=main)](https://github.com/Psmths/reave/actions?query=workflow%3ACodeQL)
+<p align="center">
+  <img src="https://img.shields.io/badge/Maintained%3F-yes-green.svg">
+  <img src="https://img.shields.io/badge/code%20style-black-000000.svg">
+  <img src="https://github.com/Psmths/reave/workflows/CodeQL/badge.svg?branch=main">
+  <img src="https://img.shields.io/github/license/Psmths/reave.svg">
+</p>
+<hr>
 
 Reave is a post-exploitation framework tailored for hypervisor environments. It is currently under development. 
 
@@ -23,12 +28,21 @@ Reave follows a traditional listener/agent model, where the user may set up mult
 The goal of Reave is to provide a framework one can leverage to automate and expedite pentesting campaigns in environments that are either heavily virtualized, or where target/critical infrastructure is hosted on hypervisor platforms such as ESXi and Proxmox. 
 
 # Screenshots
-### Listener context
-![screenshot](doc/listener_context.PNG)
-### Payload context
-![screenshot](doc/payload_context.PNG)
-### Automatic Enumeration
-![screenshot](doc/agent_autoenum.PNG)
+
+<p align="center">
+  <img src="doc/listener_context.PNG">
+</p>
+<h3 align="center"><i>Listener Context</i></h3>
+
+<p align="center">
+  <img src="doc/payload_context.PNG">
+</p>
+<h3 align="center"><i>Payload Context</i></h3>
+
+<p align="center">
+  <img src="doc/agent_autoenum.PNG">
+</p>
+<h3 align="center"><i>Automatic Hypervisor Enumeration</i></h3>
 
 # Command Line Interface
 

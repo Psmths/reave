@@ -3,6 +3,7 @@ import cmd
 import readline
 import threading
 from common.agent import Agent
+from rich import print
 from rich.console import Console
 from rich.table import Column, Table
 from common.listener import Listener
@@ -319,6 +320,11 @@ class MainMenu(cmd.Cmd):
             self.console.print(table)
 
     def add_listener(self, host, port, secret):
+        try:
+            assert os.path.exists("reave/data/cert.pem")
+        except AssertionError:
+            print("[red]Couldnt locate certificate file! Did you run the installer?[/red]")
+            return
         l = Listener(
             port, host, secret, self.agents, self.listeners, self._keyboard_interrupt
         )
