@@ -1,4 +1,5 @@
 import time
+import json
 import datetime
 from queue import Queue
 
@@ -21,11 +22,14 @@ class Agent:
         Returns true if the beacon was expected, but was not received in a
         timely manner.
         """
-        start_time = self.enumdata["agent_active_hr_start"]
-        end_time = self.enumdata["agent_active_hr_end"]
+        agent_options_dict = json.loads(self.enumdata["agent_options"])
+        start_time = agent_options_dict["START_TIME"]
+        end_time = agent_options_dict["END_TIME"]
         start_time = datetime.time(*map(int, start_time.split(":")))
         end_time = datetime.time(*map(int, end_time.split(":")))
-        max_beacon_interval = self.enumdata["agent_max_beacon_interval"]
+        max_beacon_interval = (
+            agent_options_dict["BEACON_INTERVAL"] + agent_options_dict["BEACON_JITTER"]
+        )
         if start_time <= datetime.datetime.now().time() < end_time:
             if time.time() - max_beacon_interval > self.lastseen:
                 return True

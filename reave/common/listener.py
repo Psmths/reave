@@ -1,3 +1,4 @@
+import os
 import socket
 import uuid
 import ssl
@@ -29,10 +30,13 @@ class Listener(object):
         self.logger = logging.getLogger(__name__)
         logging.debug(str(self.uuid) + " Listener spawned")
 
-    def handle_blob_write(self, json_stub):
+    def FILE_TRANSFER(self, json_stub):
+        logging.debug(str(self.uuid) + " Got BLOB fragment")
         blob_data = zlib.decompress(base64.b85decode(json_stub["data"]))
         blob_offset = json_stub["offset"]
         blob_name = json_stub["filename"]
+        if not os.path.exists(self.download_folder):
+            os.makedirs(self.download_folder)
         with open(self.download_folder + blob_name, "ab") as b:
             b.seek(blob_offset)
             b.write(blob_data)
@@ -44,11 +48,11 @@ class Listener(object):
         agent_uuid = json_stub["uuid"]
         response = json_stub["data"]
 
-        if json_stub["status"] == "FILE_TRANSFER":
-            logging.debug(str(self.uuid) + " Got BLOB")
-            return self.handle_blob_write(json_stub)
+        # Custom protocol methods
+        method = getattr(self, json_stub["status"])
+        if method:
+            return method(json_stub)
 
-        # If the agent has already been associated, skip
         for uuid, agent in self.agents.items():
             if uuid == agent_uuid and response:
                 agent.update_lastseen()
@@ -56,9 +60,8 @@ class Listener(object):
         return '_response{"status" : "ACK"}'.encode()
 
     def associate_agent(self, json_stub):
-        agent_uuid = json_stub["uuid"]  # this should probably incorporate a nonce
+        agent_uuid = json_stub["uuid"]  # this should probably incorporate server secret
         logging.debug(str(self.uuid) + " Associating agent with UUID: " + agent_uuid)
-        # If the agent has already been associated, skip
         for uuid, agent in self.agents.items():
             if uuid == agent_uuid:
                 logging.debug(
@@ -109,7 +112,9 @@ class Listener(object):
                 return cmd_pkt.encode()
 
     def handle_proto_msg(self, proto_msg):
-        logging.debug(str(self.uuid) + " Handling protocol message: " + proto_msg[0:25])
+        logging.debug(
+            str(self.uuid) + " Handling protocol message: " + proto_msg[0:125]
+        )
         if "_associate" in proto_msg:
             try:
                 json_stub = json.loads(proto_msg[10:])
@@ -149,28 +154,38 @@ class Listener(object):
         self.listeners.remove(self)
 
     def main_thread(self):
-
         try:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             self.sock.bind((self.host, self.port))
             self.sock.listen(5)
-        except PermissionError:
+        except PermissionError as e:
             print("[red]Could not start listener: Permission Error[/red]")
+            logging.debug("Could not start listener: Permission Error", exc_info=True)
             self.remove_from_list()
-            return 
+            return
         except OverflowError:
             print("[red]Could not start listener: Bad port range[/red]")
+            logging.debug("Could not start listener: Bad port range", exc_info=True)
             self.remove_from_list()
-            return 
+            return
         except socket.gaierror:
-            print("[red]Could not start listener: No address associated with hostname[/red]")
+            print(
+                "[red]Could not start listener: No address associated with hostname[/red]"
+            )
+            logging.debug(
+                "Could not start listener: No address associated with hostname",
+                exc_info=True,
+            )
             self.remove_from_list()
-            return 
+            return
         except OSError:
             print("[red]Could not start listener: Socket already bound[/red]")
+            logging.debug(
+                "Could not start listener: Socket already bound", exc_info=True
+            )
             self.remove_from_list()
-            return 
+            return
 
         while not self._keyboard_interrupt.is_set():
             try:
@@ -191,7 +206,7 @@ class Listener(object):
             except socket.timeout:
                 pass
             except ssl.SSLError:
-                logging.error(str(self.uuid) + " Listener SSL error.")
+                logging.debug(str(self.uuid) + " Listener SSL error.", exc_info=True)
                 pass
         if self._keyboard_interrupt.is_set():
             logging.debug(str(self.uuid) + " Listener caught interrupt, closing socket")
@@ -211,15 +226,17 @@ class Listener(object):
                     client.close()
                     return False
             except socket.timeout:
-                logging.debug(str(self.uuid) + " Client timeout")
+                logging.debug(str(self.uuid) + " Client timeout", exc_info=True)
                 client.close()
                 return False
             except ConnectionResetError:
-                logging.error(str(self.uuid) + " Client closed connection.")
+                logging.debug(
+                    str(self.uuid) + " Client closed connection.", exc_info=True
+                )
                 client.close()
                 return False
             except ssl.SSLError:
-                logging.error(str(self.uuid) + " Listener SSL error.")
+                logging.debug(str(self.uuid) + " Listener SSL error.", exc_info=True)
                 client.close()
                 return False
         if self._keyboard_interrupt.is_set():

