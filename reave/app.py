@@ -64,6 +64,6 @@ if __name__ == "__main__":
         [/yellow]"""
     )
 
-    #console.print("[yellow]\tPayloads loaded: " + str(len(payloads.loaded_payloads)) + "[/yellow]")
+    # console.print("[yellow]\tPayloads loaded: " + str(len(payloads.loaded_payloads)) + "[/yellow]")
 
     MainMenu(agents, listeners, payloads, _keyboard_interrupt).cmdloop()

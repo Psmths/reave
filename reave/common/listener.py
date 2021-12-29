@@ -123,9 +123,7 @@ class Listener(object):
                 return cmd_pkt.encode()
 
     def handle_proto_msg(self, proto_msg):
-        logging.debug(
-            str(self.uuid) + " Handling protocol message: " + proto_msg
-        )
+        logging.debug(str(self.uuid) + " Handling protocol message: " + proto_msg)
         if "_associate" in proto_msg:
             try:
                 json_stub = json.loads(proto_msg[10:])
