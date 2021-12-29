@@ -30,6 +30,17 @@ class Listener(object):
         self.logger = logging.getLogger(__name__)
         logging.debug(str(self.uuid) + " Listener spawned")
 
+    def STDOUT(self, json_stub):
+        print(json_stub["data"])
+        return '_response{"status" : "ACK"}'.encode()
+
+    def STDERR(self, json_stub):
+        print("[red]" + json_stub["data"] + "[/red]")
+        return '_response{"status" : "ACK"}'.encode()
+
+    def AGENT_ERROR(self, json_stub):
+        return '_response{"status" : "ACK"}'.encode()
+
     def FILE_TRANSFER(self, json_stub):
         logging.debug(str(self.uuid) + " Got BLOB fragment")
         blob_data = zlib.decompress(base64.b85decode(json_stub["data"]))
@@ -48,16 +59,16 @@ class Listener(object):
         agent_uuid = json_stub["uuid"]
         response = json_stub["data"]
 
+        for uuid, agent in self.agents.items():
+            if uuid == agent_uuid and response:
+                agent.update_lastseen()
+
         # Custom protocol methods
         method = getattr(self, json_stub["status"])
         if method:
             return method(json_stub)
 
-        for uuid, agent in self.agents.items():
-            if uuid == agent_uuid and response:
-                agent.update_lastseen()
-                print(response)
-        return '_response{"status" : "ACK"}'.encode()
+        return '_response{"status" : "ERR_UNKNOWN_METHOD"}'.encode()
 
     def associate_agent(self, json_stub):
         agent_uuid = json_stub["uuid"]  # this should probably incorporate server secret
@@ -113,7 +124,7 @@ class Listener(object):
 
     def handle_proto_msg(self, proto_msg):
         logging.debug(
-            str(self.uuid) + " Handling protocol message: " + proto_msg[0:125]
+            str(self.uuid) + " Handling protocol message: " + proto_msg
         )
         if "_associate" in proto_msg:
             try:
@@ -199,7 +210,7 @@ class Listener(object):
                 wrapped_socket = context.wrap_socket(
                     connection, server_side=True, do_handshake_on_connect=False
                 )
-                wrapped_socket.settimeout(5)
+                wrapped_socket.settimeout(10)
                 threading.Thread(
                     target=self.listenToClient, args=(wrapped_socket,)
                 ).start()
