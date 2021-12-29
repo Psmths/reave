@@ -44,6 +44,28 @@ The goal of Reave is to provide a framework one can leverage to automate and exp
 </p>
 <h3 align="center"><i>Automatic Hypervisor Enumeration</i></h3>
 
+# Usage
+
+On the server, simply run app.py:
+
+```
+python3 reave/app.py
+```
+
+On your client of choice, upload `reave/agents/client.py` and run the file. The following configuration options are available:
+
+ - `_LISTENER_HOST` Hostname/IP of the server
+ - `_LISTENER_PORTS` List of ports that the agent will attempt to connect to in round-robin fashion
+ - `_LISTENER_SECRET` Association key of the listener the agent will bind to
+ - `_AGENT_LOGLEVEL` Debug logging level
+ - `BEACON_INTERVAL` Interval the agent will beacon on
+ - `BEACON_JITTER` Random jitter factor added to beacon interval
+ - `START_TIME` What time of day the agent will start beaconing 
+ - `END_TIME` What time of day the agent will stop beaconing
+ - `SOCKET_TIMEOUT` Timeout for the agent's socket
+ - `PID_FILE` PID file the agent uses to ensure it isn't already running on the endpoint 
+ - `TRANSFER_BLOCK_SIZE` Block size the agent will use when transfering files to the server 
+
 # Command Line Interface
 
 The command line has three distinct contexts:
