@@ -126,6 +126,14 @@ class MainMenu(cmd.Cmd):
         except:
             print("Agent not found!")
             return
+
+        print("Entering interactive session. Type quit to end session.")
+        while True:
+            interactive_cmd = input(uuid[0:7] + " > ")
+            if interactive_cmd == "quit":
+                break
+            self.agents[uuid].add_command(interactive_cmd)
+
     def do_get(self, cmd):
         try:
             assert self.context == "agent"
@@ -146,11 +154,7 @@ class MainMenu(cmd.Cmd):
             print("Agent not found!")
             return
 
-        while True:
-            interactive_cmd = input(uuid[0:7] + " > ")
-            if interactive_cmd == "quit":
-                break
-            self.agents[uuid].add_command(interactive_cmd)
+        # TODO: implement agent file get
 
     def do_use(self, cmd):
         try:
@@ -256,6 +260,7 @@ class MainMenu(cmd.Cmd):
             assert len(cmd.split()) == 2
         except:
             cmd_help("payload", "run agent")
+            # TODO: implement listener-level payload run
             # cmd_help('payload', 'run listener')
             return
         cmd = cmd.split()

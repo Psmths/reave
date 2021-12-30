@@ -2,23 +2,27 @@ import os
 import json
 import zlib
 import base64
+from rich import print
 
 class Protocol:
     ACK = '_response{"status" : "ACK"}'.encode()
     ERR_UNKNOWN_METHOD = '_response{"status" : "ERR_UNKNOWN_METHOD"}'.encode()
 
     def STDOUT(json_stub):
-        print(json_stub["data"])
-        return ACK
+        if json_stub["data"]:
+            print(json_stub["data"])
+        return '_response{"status" : "ACK"}'.encode()
 
     def STDERR(json_stub):
-        print("[red]" + json_stub["data"] + "[/red]")
-        return ACK
+        if json_stub["data"]:
+            print("[red]" + json_stub["data"] + "[/red]")
+        return '_response{"status" : "ACK"}'.encode()
 
     def AGENT_ERROR(json_stub):
-        return ACK
+        return '_response{"status" : "ACK"}'.encode()
 
     def FILE_TRANSFER(json_stub):
+        # TODO: catch download dir from config?
         download_directory = "/tmp/downloads"
         blob_data = zlib.decompress(base64.b85decode(json_stub["data"]))
         blob_offset = json_stub["offset"]
