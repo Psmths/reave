@@ -3,23 +3,24 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Maintained%3F-yes-green.svg">
+  <img src="https://img.shields.io/github/license/Psmths/reave.svg">
+  <img src="https://www.repostatus.org/badges/latest/wip.svg">
+  <img src="https://img.shields.io/badge/Python-3-yellow.svg?logo=python">
   <img src="https://img.shields.io/badge/code%20style-black-000000.svg">
   <img src="https://github.com/Psmths/reave/workflows/CodeQL/badge.svg?branch=main">
-  <img src="https://img.shields.io/github/license/Psmths/reave.svg">
 </p>
 <hr>
 
-Reave is a post-exploitation framework tailored for hypervisor environments. It is currently under development. 
+Reave is a post-exploitation framework tailored for hypervisor endpoints. It is currently under development. 
 
-Reave follows a traditional listener/agent model, where the user may set up multiple listeners of various flavors that accept any number of agents, each agent intended to be executed on a hypervisor host. The framework currently provides a Python agent and supports the following objectives:
+Reave follows a traditional listener/agent model, where the user may set up multiple listeners of various flavors that accept any number of agents. The framework currently provides a Python agent and supports the following objectives:
 
+ - Interactive terminal sessions
  - Automatic enumeration of hypervisor hosts, including:
    - What guest systems are installed
-   - What network shares are mounted (NFS/iSCSI)
+   - What network shares and datastores are mounted
    - What local users are associated
    - What domain the hypervisor is a part of
-   - What datastores exist on the physical system
  - Modular payloads supporting capabilities such as:
    - Exfiltration: of datastores, files, virtual disks.
    - Persistence: Adding, modifying, deleting local users, installing SSH keys and reverse shells
