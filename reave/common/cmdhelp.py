@@ -23,6 +23,7 @@ doc = {
         "info": ["info <uuid>", "List agent info, including any auto-enumerated data"],
         "interact": ["interact", 'Enter interactive command line. "quit" to exit'],
         "create": ["create", "Start creating a new agent script."],
+        "get": ["get <file>", "Transfer file from the agent endpoint to downloads directory"],
     },
     "listener": {
         "list": ["list", "List all active listeners."],

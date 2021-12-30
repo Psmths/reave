@@ -126,8 +126,26 @@ class MainMenu(cmd.Cmd):
         except:
             print("Agent not found!")
             return
+    def do_get(self, cmd):
+        try:
+            assert self.context == "agent"
+        except:
+            print("wrong context")
+            return
+        try:
+            assert len(cmd.split()) == 2
+        except:
+            cmd_help("agent", "get")
+            return
+        cmd = cmd.split()
+        uuid = cmd[0]
+        file = cmd[1]
+        try:
+            assert uuid in self.agents
+        except:
+            print("Agent not found!")
+            return
 
-        print("Entering interactive session. Type quit to end session.")
         while True:
             interactive_cmd = input(uuid[0:7] + " > ")
             if interactive_cmd == "quit":

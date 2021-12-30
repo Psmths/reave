@@ -96,6 +96,7 @@ interact <uuid>         Interactive terminal session with agent.
                         'quit' to exit.
 create                  Start creating a new agent script.
                         Will write to ./data/ directory
+get <uuid> <file>       Transfer file from the agent endpoint to downloads directory
 ```
 
 Exit this context by using command `back`

