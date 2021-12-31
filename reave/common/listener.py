@@ -197,6 +197,7 @@ class Listener(object):
             try:
                 connection, address = self.sock.accept()
                 context = ssl.SSLContext()
+                context.minimum_version = ssl.TLSVersion.TLSv1_2
                 context.verify_mode = ssl.CERT_OPTIONAL
                 context.load_cert_chain("reave/data/cert.pem")
                 wrapped_socket = context.wrap_socket(
