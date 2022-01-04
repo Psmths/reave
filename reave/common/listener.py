@@ -14,6 +14,18 @@ from common.protocol import Protocol
 
 
 class Listener(object):
+    """
+    Listener class is responsible for handling, in a threaded manner,
+    communications between the server and registered agents. It provides
+    mechanisms for:
+
+     - Registering agents
+     - Responding to agent requests
+     - Sending commands and payloads to agents
+     - Receiving files from agents
+     - Handling protocol messages as specified in protcol.py
+    """
+
     def __init__(self, port, host, secret, agents, listeners, _keyboard_interrupt):
         self.uuid = uuid.uuid4()
         self.host = host
