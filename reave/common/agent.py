@@ -36,27 +36,52 @@ class Agent:
         return False
 
     def get_platform(self):
+        """
+        Returns the reported platform for the agent.
+        """
         return self.enumdata["host_data"]["host_platform"]
 
     def get_hostname(self):
+        """
+        Returns the reported hostname for the agent.
+        """
         return self.enumdata["host_data"]["host_name"]
 
     def update_lastseen(self):
+        """
+        Updates the agent's last seen time.
+        """
         self.lastseen = time.time()
 
     def add_command(self, command):
+        """
+        Adds a command (type: string) to the queue for the agent
+        to execute.
+        """
         self.command_queue.put(command)
 
     def add_payload(self, payload_script):
+        """
+        Adds a payload (type: string) to the queue for the agent
+        to execute.
+        """
         self.payload_queue.put(payload_script)
 
     def get_command(self):
+        """
+        Gets the most recent command in the agent's
+        command queue.
+        """
         if self.command_queue.empty():
             return False
         else:
             return self.command_queue.get()
 
     def get_payload(self):
+        """
+        Gets the most recent payload in the agent's
+        payload queue.
+        """
         if self.payload_queue.empty():
             return False
         else:

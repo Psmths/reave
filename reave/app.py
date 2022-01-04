@@ -9,6 +9,7 @@ from signal import signal, SIGINT
 from common.payloads import Payloads
 from common.mainmenu import MainMenu
 
+# TODO: Parse configfile for cmd history and log settings
 _LOGFILE = ".reave_log"
 _CMD_HISTFILE = ".reave_history"
 _CMD_HISTFILE_SIZE = 1000
@@ -63,7 +64,5 @@ if __name__ == "__main__":
 
         [/yellow]"""
     )
-
-    # console.print("[yellow]\tPayloads loaded: " + str(len(payloads.loaded_payloads)) + "[/yellow]")
 
     MainMenu(agents, listeners, payloads, _keyboard_interrupt).cmdloop()

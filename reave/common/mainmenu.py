@@ -3,7 +3,6 @@ import cmd
 import json
 import readline
 import threading
-from common.agent import Agent
 from rich import print
 from rich.console import Console
 from rich.table import Column, Table

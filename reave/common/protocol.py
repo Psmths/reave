@@ -2,11 +2,15 @@ import os
 import json
 import zlib
 import base64
+import logging
+import configparser
 from rich import print
+
 
 class Protocol:
     ACK = '_response{"status" : "ACK"}'.encode()
     ERR_UNKNOWN_METHOD = '_response{"status" : "ERR_UNKNOWN_METHOD"}'.encode()
+    logger = logging.getLogger(__name__)
 
     def STDOUT(json_stub):
         if json_stub["data"]:
@@ -22,14 +26,17 @@ class Protocol:
         return '_response{"status" : "ACK"}'.encode()
 
     def FILE_TRANSFER(json_stub):
-        # TODO: catch download dir from config?
-        download_directory = "/tmp/downloads"
+        logging.debug("Handling FILE_TRANSFER")
+        config = configparser.ConfigParser()
+        config.read("reave/data/reave.conf")
+        download_directory = config["reave"]["download_directory"]
         blob_data = zlib.decompress(base64.b85decode(json_stub["data"]))
         blob_offset = json_stub["offset"]
         blob_name = json_stub["filename"]
         if not os.path.exists(download_directory):
             os.makedirs(download_directory)
-        with open(download_directory + blob_name, "ab") as b:
+        file = os.path.join(download_directory, blob_name)
+        with open(file, "ab") as b:
             b.seek(blob_offset)
             b.write(blob_data)
         response_packet_stub = {"status": "ACK", "offset": blob_offset}

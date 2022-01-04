@@ -1,4 +1,3 @@
-import os
 import socket
 import uuid
 import ssl
@@ -7,6 +6,7 @@ import logging
 import time
 import json
 import base64
+import configparser
 from rich import print
 from common.agent import Agent
 from common.responses import serve_http
@@ -28,12 +28,12 @@ class Listener(object):
 
     def get_response(self, json_stub):
         """
-        Provides the beaconing agent with a response. Current methods are 
-        stored in protocol.py. If the agent sends a response status that 
+        Provides the beaconing agent with a response. Current methods are
+        stored in protocol.py. If the agent sends a response status that
         is not reflected in those methods, the listener will return an
-        ERR_UNKNOWN_METHOD response. 
+        ERR_UNKNOWN_METHOD response.
 
-        This will always update the lastseen time of the agent. 
+        This will always update the lastseen time of the agent.
         """
         agent_uuid = json_stub["uuid"]
         response = json_stub["data"]
@@ -50,12 +50,11 @@ class Listener(object):
 
     def associate_agent(self, json_stub):
         """
-        Provides an initial method for associating an agent. If 
-        the agent has already been seen, this will update the 
-        agent's lastseen time. 
+        Provides an initial method for associating an agent. If
+        the agent has already been seen, this will update the
+        agent's lastseen time.
         """
-        # TODO: modify agent uuid with server-side secret
-        agent_uuid = json_stub["uuid"] 
+        agent_uuid = json_stub["uuid"]
         logging.debug(str(self.uuid) + " Associating agent with UUID: " + agent_uuid)
 
         # Check if the agent is already associated
@@ -67,20 +66,22 @@ class Listener(object):
                 agent.update_lastseen()
                 return Protocol.ACK
 
-        self.agents[agent_uuid] = Agent(self, agent_uuid, time.time(), json_stub["enumdata"])
+        self.agents[agent_uuid] = Agent(
+            self, agent_uuid, time.time(), json_stub["enumdata"]
+        )
         logging.debug(str(self.uuid) + " Agent associated successfully.")
         return Protocol.ACK
 
     def handle_beacon(self, json_stub):
         """
-        Handles an agent's beacon request. This method will always 
-        update an agent's last seen time. It will then query the 
+        Handles an agent's beacon request. This method will always
+        update an agent's last seen time. It will then query the
         agent for outstanding commands or payloads and send them
         encoded in base85.
 
         Pending commands will be sent with higher precedence than
-        pending payloads. In the case that there are neither 
-        commands or payloads, these will be set to None. 
+        pending payloads. In the case that there are neither
+        commands or payloads, these will be set to None.
         """
         agent_uuid = json_stub["uuid"]
         for uuid, agent in self.agents.items():
@@ -165,7 +166,7 @@ class Listener(object):
             self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             self.sock.bind((self.host, self.port))
             self.sock.listen(5)
-        except PermissionError as e:
+        except PermissionError:
             print("[red]Could not start listener: Permission Error[/red]")
             logging.debug("Could not start listener: Permission Error", exc_info=True)
             self.remove_from_list()
@@ -199,7 +200,10 @@ class Listener(object):
                 context = ssl.SSLContext()
                 context.minimum_version = ssl.TLSVersion.TLSv1_2
                 context.verify_mode = ssl.CERT_OPTIONAL
-                context.load_cert_chain("reave/data/cert.pem")
+                config = configparser.ConfigParser()
+                config.read("reave/data/reave.conf")
+                certificate_path = config["reave"]["cert_path"]
+                context.load_cert_chain(certificate_path)
                 wrapped_socket = context.wrap_socket(
                     connection, server_side=True, do_handshake_on_connect=False
                 )
