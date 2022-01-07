@@ -14,6 +14,7 @@ class Agent:
         self.uuid = uuid
         self.command_queue = Queue()
         self.payload_queue = Queue()
+        self.task_queue = Queue()
         self.lastseen = lastseen
         self.enumdata = enumdata
 
@@ -59,6 +60,23 @@ class Agent:
         to execute.
         """
         self.command_queue.put(command)
+
+    def add_task(self, task):
+        """
+        Adds a task (type: string) to the queue for the agent
+        to execute.
+        """
+        self.task_queue.put(task)
+
+    def get_task(self):
+        """
+        Gets the most recent task in the agent's
+        task queue.
+        """
+        if self.task_queue.empty():
+            return False
+        else:
+            return self.task_queue.get()
 
     def add_payload(self, payload_script):
         """

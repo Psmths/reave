@@ -49,10 +49,16 @@ class Listener(object):
         """
         agent_uuid = json_stub["uuid"]
         response = json_stub["data"]
+        status = json_stub["status"]
 
         for uuid, agent in self.agents.items():
             if uuid == agent_uuid and response:
                 agent.update_lastseen()
+
+        if status == "AGENT_ERROR":
+            logging.error(agent_uuid + " AGENT_ERROR: " + response)
+            print("[red]Error: " + response + "[/red]")
+            return Protocol.ACK
 
         method = getattr(Protocol, json_stub["status"])
         if method:
@@ -105,6 +111,7 @@ class Listener(object):
                         "status": "OK",
                         "command": base64.b85encode(command.encode()).decode(),
                         "payload": None,
+                        "task": None,
                     }
                     cmd_pkt = "_response" + json.dumps(response_packet_stub)
                     return cmd_pkt.encode()
@@ -115,6 +122,18 @@ class Listener(object):
                         "status": "OK",
                         "command": None,
                         "payload": base64.b85encode(payload.encode()).decode(),
+                        "task": None,
+                    }
+                    cmd_pkt = "_response" + json.dumps(response_packet_stub)
+                    return cmd_pkt.encode()
+
+                task = agent.get_task()
+                if task:
+                    response_packet_stub = {
+                        "status": "OK",
+                        "command": None,
+                        "payload": None,
+                        "task": base64.b85encode(task.encode()).decode(),
                     }
                     cmd_pkt = "_response" + json.dumps(response_packet_stub)
                     return cmd_pkt.encode()
@@ -123,6 +142,7 @@ class Listener(object):
                     "status": "OK",
                     "command": None,
                     "payload": None,
+                    "task": None,
                 }
                 cmd_pkt = "_response" + json.dumps(response_packet_stub)
                 return cmd_pkt.encode()
