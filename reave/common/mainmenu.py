@@ -310,13 +310,13 @@ class MainMenu(cmd.Cmd):
             return str(math.trunc(delta)) + " seconds ago"
 
         if delta >= 60 and delta < 3600:
-            return str(math.trunc(delta/60)) + " minutes ago"
+            return str(math.trunc(delta / 60)) + " minutes ago"
 
         if delta >= 3600 and delta < 86400:
-            return str(math.trunc(delta/3600)) + " hours ago"
+            return str(math.trunc(delta / 3600)) + " hours ago"
 
         if delta >= 86400:
-            return str(math.trunc(delta/86400)) + " days ago"
+            return str(math.trunc(delta / 86400)) + " days ago"
 
     def list_agent(self):
         table = Table(show_header=True, header_style="bold magenta")
