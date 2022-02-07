@@ -29,7 +29,7 @@ def handler(signal_received, frame):
 
 
 if __name__ == "__main__":
-
+    # TODO: Add log rotation
     logging.basicConfig(
         filename=_LOGFILE,
         filemode="a",

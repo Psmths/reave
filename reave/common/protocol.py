@@ -25,6 +25,7 @@ class Protocol:
     def AGENT_ERROR(json_stub):
         return '_response{"status" : "ACK"}'.encode()
 
+    # TODO: Stateful file transfer to handle interruptions
     def FILE_TRANSFER(json_stub):
         logging.debug("Handling FILE_TRANSFER")
         config = configparser.ConfigParser()

@@ -1,6 +1,8 @@
 import os
 import cmd
 import json
+import math
+import time
 import readline
 import threading
 from rich import print
@@ -297,6 +299,25 @@ class MainMenu(cmd.Cmd):
             table.add_row(payload_name, payload.info["description"])
         self.console.print(table)
 
+    def last_seen_str(self, lastseen):
+        current_time = time.time()
+        delta = current_time - lastseen
+
+        if delta < 1:
+            return "CONNECTED"
+
+        if delta < 60:
+            return str(math.trunc(delta)) + " seconds ago"
+
+        if delta >= 60 and delta < 3600:
+            return str(math.trunc(delta/60)) + " minutes ago"
+
+        if delta >= 3600 and delta < 86400:
+            return str(math.trunc(delta/3600)) + " hours ago"
+
+        if delta >= 86400:
+            return str(math.trunc(delta/86400)) + " days ago"
+
     def list_agent(self):
         table = Table(show_header=True, header_style="bold magenta")
         table.add_column("UUID")
@@ -304,9 +325,9 @@ class MainMenu(cmd.Cmd):
         table.add_column("Platform")
         table.add_column("Hostname")
         for uuid, agent in self.agents.items():
-            a_status = "[green]" + str(agent.lastseen) + "[/green]"
+            a_status = "[green]" + self.last_seen_str(agent.lastseen) + "[/green]"
             if agent.beacon_expired():
-                a_status = "[red](!) " + str(agent.lastseen) + "[/red]"
+                a_status = "[red](!) " + self.last_seen_str(agent.lastseen) + "[/red]"
             table.add_row(uuid, a_status, agent.get_platform(), agent.get_hostname())
         self.console.print(table)
 
