@@ -41,9 +41,14 @@ The goal of Reave is to provide a framework one can leverage to automate and exp
 <h3 align="center"><i>Payload Context</i></h3>
 
 <p align="center">
-  <img src="doc/agent_autoenum.PNG">
+  <img src="doc/agent_info.png">
 </p>
 <h3 align="center"><i>Automatic Hypervisor Enumeration</i></h3>
+
+<p align="center">
+  <img src="doc/agent_list.png">
+</p>
+<h3 align="center"><i>Centralized C2 Overview</i></h3>
 
 # Usage
 
@@ -116,6 +121,15 @@ run listener <uuid>     Run the payload on all agents on the listener
 ```
 
 Exit this context by using command `back`
+
+## Formatting Selection
+
+Reave also supports defining what format you would like to view enumeration data in. To switch to a particular format:
+
+```
+format json             Output information in table format.
+format table            Output information in JSON format.
+```
 
 # Contributors
 

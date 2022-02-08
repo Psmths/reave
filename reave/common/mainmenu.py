@@ -26,6 +26,7 @@ class MainMenu(cmd.Cmd):
         self.payload = None
         self.agent = None
         self.prompt = "> "
+        self.stdout_format = "table"
         self._keyboard_interrupt = _keyboard_interrupt
 
     def complete_interact(self, text, line, begidx, endidx):
@@ -70,6 +71,21 @@ class MainMenu(cmd.Cmd):
     def do_back(self, cmd):
         self.context = None
         self.update_prompt()
+
+    def do_format(self, cmd):
+        try:
+            assert len(cmd.split()) == 1
+        except:
+            context_help("format")
+            return
+        cmd = cmd.split()
+        requested_format = cmd[0]
+        try:
+            assert requested_format in ["json", "table"]
+        except:
+            context_help("format")
+            return
+        self.stdout_format = requested_format
 
     def do_add(self, cmd):
         try:
@@ -279,6 +295,25 @@ class MainMenu(cmd.Cmd):
                 return
             self.agents[uuid].add_payload(script)
 
+    def last_seen_str(self, lastseen):
+        current_time = time.time()
+        delta = current_time - lastseen
+
+        if delta < 1:
+            return "CONNECTED"
+
+        if delta < 60:
+            return str(math.trunc(delta)) + " seconds ago"
+
+        if delta >= 60 and delta < 3600:
+            return str(math.trunc(delta / 60)) + " minutes ago"
+
+        if delta >= 3600 and delta < 86400:
+            return str(math.trunc(delta / 3600)) + " hours ago"
+
+        if delta >= 86400:
+            return str(math.trunc(delta / 86400)) + " days ago"
+
     def list_listener(self):
         table = Table(show_header=True, header_style="bold magenta")
         table.add_column("UUID")
@@ -299,25 +334,6 @@ class MainMenu(cmd.Cmd):
             table.add_row(payload_name, payload.info["description"])
         self.console.print(table)
 
-    def last_seen_str(self, lastseen):
-        current_time = time.time()
-        delta = current_time - lastseen
-
-        if delta < 1:
-            return "CONNECTED"
-
-        if delta < 60:
-            return str(math.trunc(delta)) + " seconds ago"
-
-        if delta >= 60 and delta < 3600:
-            return str(math.trunc(delta / 60)) + " minutes ago"
-
-        if delta >= 3600 and delta < 86400:
-            return str(math.trunc(delta / 3600)) + " hours ago"
-
-        if delta >= 86400:
-            return str(math.trunc(delta / 86400)) + " days ago"
-
     def list_agent(self):
         table = Table(show_header=True, header_style="bold magenta")
         table.add_column("UUID")
@@ -332,50 +348,53 @@ class MainMenu(cmd.Cmd):
         self.console.print(table)
 
     def agent_info(self, agent):
-
-        table = Table(
-            show_header=True, header_style="bold magenta", title="Agent Options"
-        )
-        table.add_column("Option")
-        table.add_column("Value")
-        for key, value in json.loads(agent.enumdata["agent_options"]).items():
-            table.add_row(key, str(value))
-        self.console.print(table)
-
-        if "host_local_users" in agent.enumdata["host_data"]:
+        if self.stdout_format == "table":
             table = Table(
-                show_header=True, header_style="bold magenta", title="Local Users"
+                show_header=True, header_style="bold magenta", title="Agent Options"
             )
-            table.add_column("Username")
-            table.add_column("User Description")
-            host_local_users = agent.enumdata["host_data"]["host_local_users"]
-            for uname, user in host_local_users.items():
-                table.add_row(uname, user["description"])
+            table.add_column("Option")
+            table.add_column("Value")
+            for key, value in json.loads(agent.enumdata["agent_options"]).items():
+                table.add_row(key, str(value))
             self.console.print(table)
 
-        if "host_mounts" in agent.enumdata["host_data"]:
-            table = Table(
-                show_header=True, header_style="bold magenta", title="Mountpoints"
-            )
-            table.add_column("UUID")
-            table.add_column("Mountpoint")
-            table.add_column("Name")
-            table.add_column("Type")
-            table.add_column("Size")
-            table.add_column("Free")
-
-            mounts = agent.enumdata["host_data"]["host_mounts"]
-
-            for uuid, mount in mounts.items():
-                table.add_row(
-                    uuid,
-                    mount["mountpoint"],
-                    mount["name"],
-                    mount["type"],
-                    mount["size"],
-                    mount["free"],
+            if "host_local_users" in agent.enumdata["host_data"]:
+                table = Table(
+                    show_header=True, header_style="bold magenta", title="Local Users"
                 )
-            self.console.print(table)
+                table.add_column("Username")
+                table.add_column("User Description")
+                host_local_users = agent.enumdata["host_data"]["host_local_users"]
+                for uname, user in host_local_users.items():
+                    table.add_row(uname, user["description"])
+                self.console.print(table)
+
+            if "host_mounts" in agent.enumdata["host_data"]:
+                table = Table(
+                    show_header=True, header_style="bold magenta", title="Mountpoints"
+                )
+                table.add_column("UUID")
+                table.add_column("Mountpoint")
+                table.add_column("Name")
+                table.add_column("Type")
+                table.add_column("Size")
+                table.add_column("Free")
+
+                mounts = agent.enumdata["host_data"]["host_mounts"]
+
+                for uuid, mount in mounts.items():
+                    table.add_row(
+                        uuid,
+                        mount["mountpoint"],
+                        mount["name"],
+                        mount["type"],
+                        mount["size"],
+                        mount["free"],
+                    )
+                self.console.print(table)
+
+        if self.stdout_format == "json":
+            self.console.print(agent.enumdata)
 
     def add_listener(self, host, port, secret):
         try:

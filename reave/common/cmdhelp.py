@@ -36,6 +36,10 @@ doc = {
         "add": ["add <host> <port> <secret>", "Create and start a new listener."],
         "remove": ["remove <uuid>", "Remove specified listener."],
     },
+    "format": {
+        "table": ["table", "Output information in table format."],
+        "json": ["json", "Output information in JSON format."],
+    },
 }
 
 
