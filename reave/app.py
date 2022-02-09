@@ -2,26 +2,38 @@ import os
 import logging
 import readline
 import threading
+import configparser
 from sys import exit
 from rich import print
 from rich.console import Console
 from common.payloads import Payloads
 from common.mainmenu import MainMenu
 
-# TODO: Parse configfile for cmd history and log settings
-_LOGFILE = ".reave_log"
-_CMD_HISTFILE = ".reave_history"
-_CMD_HISTFILE_SIZE = 1000
-
-
-def app_close():
-    readline.set_history_length(_CMD_HISTFILE_SIZE)
-    readline.write_history_file(_CMD_HISTFILE)
-    logging.info("Shutting down...")
-    exit(0)
-
 
 if __name__ == "__main__":
+
+    # Start the console
+    console = Console()
+
+    # Check if config file is present
+    config = configparser.ConfigParser()
+    config_file = os.path.join(os.path.dirname(__file__), 'conf', 'reave.conf')
+    try:
+        assert os.path.exists(config_file)
+    except AssertionError:
+        console.print("[red]Configuration file not found! Did you run the installer?[/red]")
+        exit(0)
+
+    # Read config parameters
+    config.read(config_file)
+    try:
+        _LOGFILE = config["reave"]["logfile"]
+        _CMD_HISTFILE = config["reave"]["histfile"]
+        _CMD_HISTFILE_SIZE = int(config["reave"]["hist_size"])
+    except:
+        console.print("[red]Error reading the configuration[/red]")
+        exit(0)
+
     # TODO: Add log rotation
     logging.basicConfig(
         filename=_LOGFILE,
@@ -41,8 +53,6 @@ if __name__ == "__main__":
     if os.path.exists(_CMD_HISTFILE):
         readline.read_history_file(_CMD_HISTFILE)
 
-    console = Console()
-
     console.print(
         """[yellow]
     ██████╗ ███████╗ █████╗ ██╗   ██╗███████╗
@@ -57,4 +67,7 @@ if __name__ == "__main__":
     )
 
     MainMenu(agents, listeners, payloads).cmdloop_ki()
-    app_close()
+    
+    readline.set_history_length(_CMD_HISTFILE_SIZE)
+    readline.write_history_file(_CMD_HISTFILE)
+    logging.info("Shutting down...")

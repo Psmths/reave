@@ -1,3 +1,6 @@
 [reave]
 download_directory = /tmp/reave_download
 cert_path = reave/data/cert.pem
+logfile = .reave_log
+histfile = .reave_history
+hist_size = 1000

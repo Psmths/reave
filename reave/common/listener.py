@@ -232,8 +232,17 @@ class Listener(object):
                 context = ssl.SSLContext()
                 context.minimum_version = ssl.TLSVersion.TLSv1_2
                 context.verify_mode = ssl.CERT_OPTIONAL
+
                 config = configparser.ConfigParser()
-                config.read("reave/conf/reave.conf")
+                config_file = os.path.join(os.path.dirname(__file__), 'conf', 'reave.conf')
+                try:
+                    assert os.path.exists(config_file)
+                except AssertionError:
+                    console.print("[red]Configuration file not found! Did you run the installer?[/red]")
+                    exit(0)
+
+                config = configparser.ConfigParser()
+                config.read(config_file)
                 certificate_path = config["reave"]["cert_path"]
                 context.load_cert_chain(certificate_path)
                 wrapped_socket = context.wrap_socket(
