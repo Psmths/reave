@@ -5,7 +5,6 @@ import threading
 from sys import exit
 from rich import print
 from rich.console import Console
-from signal import signal, SIGINT
 from common.payloads import Payloads
 from common.mainmenu import MainMenu
 
@@ -13,15 +12,9 @@ from common.mainmenu import MainMenu
 _LOGFILE = ".reave_log"
 _CMD_HISTFILE = ".reave_history"
 _CMD_HISTFILE_SIZE = 1000
-_keyboard_interrupt = threading.Event()
 
 
-def handler(signal_received, frame):
-    print(
-        "[bold][red]Please wait for graceful shutdown of active listeners...[/red][/bold]"
-    )
-    logging.info("Shutting down all listeners...")
-    _keyboard_interrupt.set()
+def app_close():
     readline.set_history_length(_CMD_HISTFILE_SIZE)
     readline.write_history_file(_CMD_HISTFILE)
     logging.info("Shutting down...")
@@ -45,8 +38,6 @@ if __name__ == "__main__":
 
     payloads.load_payloads()
 
-    signal(SIGINT, handler)
-
     if os.path.exists(_CMD_HISTFILE):
         readline.read_history_file(_CMD_HISTFILE)
 
@@ -65,4 +56,5 @@ if __name__ == "__main__":
         [/yellow]"""
     )
 
-    MainMenu(agents, listeners, payloads, _keyboard_interrupt).cmdloop()
+    MainMenu(agents, listeners, payloads).cmdloop_ki()
+    app_close()

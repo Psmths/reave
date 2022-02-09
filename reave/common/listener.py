@@ -26,14 +26,14 @@ class Listener(object):
      - Handling protocol messages as specified in protcol.py
     """
 
-    def __init__(self, port, host, secret, agents, listeners, _keyboard_interrupt):
-        self.uuid = uuid.uuid4()
+    def __init__(self, port, host, secret, agents, listeners):
+        self.uuid = str(uuid.uuid4())[0:4]
         self.host = host
         self.port = port
         self.agents = agents
         self.listeners = listeners
         self.secret = secret
-        self._keyboard_interrupt = _keyboard_interrupt
+        self._close = False
 
         self.logger = logging.getLogger(__name__)
         logging.debug(str(self.uuid) + " Listener spawned")
@@ -226,7 +226,7 @@ class Listener(object):
             self.remove_from_list()
             return
 
-        while not self._keyboard_interrupt.is_set():
+        while not self._close:
             try:
                 connection, address = self.sock.accept()
                 context = ssl.SSLContext()
@@ -248,13 +248,28 @@ class Listener(object):
             except ssl.SSLError:
                 logging.debug(str(self.uuid) + " Listener SSL error.", exc_info=True)
                 pass
-        if self._keyboard_interrupt.is_set():
+            except OSError:
+                pass
+        if self._close:
             logging.debug(str(self.uuid) + " Listener caught interrupt, closing socket")
-            self.sock.close()
+            self.close()
+
+    def close(self):
+        # Disconnect all agents
+        self._close = True
+        # Close my socket
+        self.sock.close()
+        try:
+            socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect(
+                (self.host, self.port)
+            )
+        except OSError:
+            pass
+        del self
 
     def listenToClient(self, client):
         size = 16384
-        while not self._keyboard_interrupt.is_set():
+        while not self._close:
             try:
                 data = client.recv(size)
                 if data:
@@ -279,7 +294,7 @@ class Listener(object):
                 logging.debug(str(self.uuid) + " Listener SSL error.", exc_info=True)
                 client.close()
                 return False
-        if self._keyboard_interrupt.is_set():
+        if self._close:
             logging.debug(str(self.uuid) + " Listener caught interrupt, closing client")
             client.close()
             return False

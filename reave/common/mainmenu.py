@@ -1,5 +1,6 @@
 import os
 import cmd
+import sys
 import json
 import math
 import time
@@ -13,7 +14,7 @@ from common.cmdhelp import cmd_help, context_help
 
 
 class MainMenu(cmd.Cmd):
-    def __init__(self, agents, listeners, payloads, _keyboard_interrupt):
+    def __init__(self, agents, listeners, payloads):
 
         cmd.Cmd.__init__(self)
         readline.set_completer_delims(" ")
@@ -27,7 +28,6 @@ class MainMenu(cmd.Cmd):
         self.agent = None
         self.prompt = "> "
         self.stdout_format = "table"
-        self._keyboard_interrupt = _keyboard_interrupt
 
     def complete_interact(self, text, line, begidx, endidx):
         if self.context == "agent":
@@ -108,6 +108,21 @@ class MainMenu(cmd.Cmd):
             cmd_help("listener", "add")
             return
         self.add_listener(host, port, secret)
+
+    def do_remove(self, cmd):
+        try:
+            assert self.context == "listener"
+        except:
+            print("wrong context")
+            return
+        try:
+            assert len(cmd.split()) == 1
+        except:
+            cmd_help("listener", "remove")
+            return
+        cmd = cmd.split()
+        listener_uuid = cmd[0]
+        self.remove_listener(listener_uuid)
 
     def do_list(self, cmd):
         try:
@@ -404,8 +419,46 @@ class MainMenu(cmd.Cmd):
                 "[red]Couldnt locate certificate file! Did you run the installer?[/red]"
             )
             return
-        l = Listener(
-            port, host, secret, self.agents, self.listeners, self._keyboard_interrupt
-        )
+        l = Listener(port, host, secret, self.agents, self.listeners)
         threading.Thread(target=l.main_thread).start()
         self.listeners.append(l)
+
+    def remove_listener(self, listener_uuid):
+        selected_listener = (
+            _[0]
+            if (
+                _ := [
+                    listener
+                    for listener in self.listeners
+                    if listener.uuid == listener_uuid
+                ]
+            )
+            else None
+        )
+
+        if selected_listener:
+            # Stop selected listener
+            selected_listener.close()
+            # Remove listener from list
+            self.listeners = list(
+                filter(lambda listener: listener.uuid != listener_uuid, self.listeners)
+            )
+        else:
+            self.console.print("[red]Listener not found![/red]")
+
+    def close_listeners(self):
+        # Stop all listeners
+        for listener in self.listeners:
+            listener.close()
+
+    def do_EOF(self, line):
+        return True
+
+    def cmdloop_ki(self):
+        while True:
+            try:
+                self.cmdloop()
+            except KeyboardInterrupt:
+                self.close_listeners()
+                sys.stdout.write("\n")
+                return
