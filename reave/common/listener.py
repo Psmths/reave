@@ -233,7 +233,7 @@ class Listener(object):
                 context.minimum_version = ssl.TLSVersion.TLSv1_2
                 context.verify_mode = ssl.CERT_OPTIONAL
                 config = configparser.ConfigParser()
-                config.read("reave/data/reave.conf")
+                config.read("reave/conf/reave.conf")
                 certificate_path = config["reave"]["cert_path"]
                 context.load_cert_chain(certificate_path)
                 wrapped_socket = context.wrap_socket(

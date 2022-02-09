@@ -29,7 +29,7 @@ class Protocol:
     def FILE_TRANSFER(json_stub):
         logging.debug("Handling FILE_TRANSFER")
         config = configparser.ConfigParser()
-        config.read("reave/data/reave.conf")
+        config.read("reave/conf/reave.conf")
         download_directory = config["reave"]["download_directory"]
         blob_data = zlib.decompress(base64.b85decode(json_stub["data"]))
         blob_offset = json_stub["offset"]
