@@ -8,6 +8,12 @@ from rich import print
 
 
 class Protocol:
+    """
+    The Protocol class is responsible for responding to / acting upon
+    incoming protocol messages from agents, abstracting this functionality
+    from the Listener class.
+    """
+
     ACK = '_response{"status" : "ACK"}'.encode()
     ERR_UNKNOWN_METHOD = '_response{"status" : "ERR_UNKNOWN_METHOD"}'.encode()
     logger = logging.getLogger(__name__)

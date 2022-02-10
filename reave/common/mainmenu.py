@@ -8,45 +8,90 @@ import readline
 import threading
 from rich import print
 from rich.console import Console
-from rich.table import Column, Table
+from rich.table import Table
 from common.listener import Listener
 from common.cmdhelp import cmd_help, context_help
 
 
 class MainMenu(cmd.Cmd):
+    """
+    MainMenu class is responsible for user interface
+    """
+
     def __init__(self, agents, listeners, payloads):
 
         cmd.Cmd.__init__(self)
         readline.set_completer_delims(" ")
 
-        self.agents = agents
-        self.listeners = listeners
-        self.payloads = payloads
-        self.console = Console()
-        self.context = None
-        self.payload = None
-        self.agent = None
-        self.prompt = "> "
-        self.stdout_format = "table"
+        self.agents = agents  # Dictionary of agents
+        self.listeners = listeners  # List of listeners
+        self.payloads = payloads  # Object containing all payloads
+        self.console = Console()  # Console for stdout
+        self.context = None  # Current context
+        self.payload = None  # Current payload
+        self.agent = None  # Current agent
+        self.prompt = "> "  # Prompt for command line interfact
+        self.stdout_format = "table"  # Formatting option for data output
+        self.active = True  # Bool to exit cmdloop gracefully
 
     def complete_interact(self, text, line, begidx, endidx):
+        """
+        Offer available agents that the user can interact with
+        """
         if self.context == "agent":
             return [i for i, a in self.agents.items() if i.startswith(text)]
 
+    def complete_info(self, text, line, begidx, endidx):
+        """
+        Offer available agents that the user can get information from
+        """
+        if self.context == "agent":
+            return [i for i, a in self.agents.items() if i.startswith(text)]
+
+    def complete_get(self, text, line, begidx, endidx):
+        """
+        Offer available agents that the user can get files from
+        """
+        if self.context == "agent":
+            return [i for i, a in self.agents.items() if i.startswith(text)]
+
+    def complete_remove(self, text, line, begidx, endidx):
+        """
+        Offer available listeners that the user can remove
+        """
+        if self.context == "listener":
+            return [i.uuid for i in self.listeners if i.uuid.startswith(text)]
+
     def complete_use(self, text, line, begidx, endidx):
+        """
+        Offer available payloads that the user can select
+        """
         if self.context == "payload":
             return [i for i in self.payloads.loaded_payloads if i.startswith(text)]
 
     def do_help(self, cmd):
+        """
+        Offer help to the user. If the context is None, return general information.
+        If the context is active (agent,listener,payload), return all available
+        commands for that context.
+        """
         if self.context:
             context_help(self.context.split(" ")[0])
         else:
             context_help(None)
 
     def emptyline(self):
+        """
+        This method prevents execution of the previous command when the user
+        presses enter with a blank command in the prompt.
+        """
         pass
 
     def update_prompt(self):
+        """
+        This method is called any time the user switches the context or the payload
+        to update the prompt.
+        """
         if self.payload:
             self.prompt = (
                 self.context + "(" + self.payload.info["name"] + ") > "
@@ -57,45 +102,64 @@ class MainMenu(cmd.Cmd):
             self.prompt = (self.context + " > ") if self.context else "> "
 
     def do_listener(self, cmd):
+        """
+        Switches the active context to listener
+        """
         self.context = "listener"
         self.update_prompt()
 
     def do_agent(self, cmd):
+        """
+        Switches the active context to agent
+        """
         self.context = "agent"
         self.update_prompt()
 
     def do_payload(self, cmd):
+        """
+        Switches the active context to payload
+        """
         self.context = "payload"
         self.update_prompt()
 
     def do_back(self, cmd):
+        """
+        Removes the currently active context
+        """
         self.context = None
         self.update_prompt()
 
     def do_format(self, cmd):
+        """
+        Method to switch the formatting of returned data. Currently
+        this only impacts auto-enumerated data for connected agents.
+        """
         try:
             assert len(cmd.split()) == 1
-        except:
+        except AssertionError:
             context_help("format")
             return
         cmd = cmd.split()
         requested_format = cmd[0]
         try:
             assert requested_format in ["json", "table"]
-        except:
+        except AssertionError:
             context_help("format")
             return
         self.stdout_format = requested_format
 
     def do_add(self, cmd):
+        """
+        Method to add a new listener
+        """
         try:
             assert self.context == "listener"
-        except:
+        except AssertionError:
             print("wrong context")
             return
         try:
             assert len(cmd.split()) == 3
-        except:
+        except AssertionError:
             cmd_help("listener", "add")
             return
         cmd = cmd.split()
@@ -103,21 +167,25 @@ class MainMenu(cmd.Cmd):
         port = cmd[1]
         secret = cmd[2]
         try:
+            # TODO: Check port before a listener is attempted
             port = int(port)
-        except:
+        except ValueError:
             cmd_help("listener", "add")
             return
         self.add_listener(host, port, secret)
 
     def do_remove(self, cmd):
+        """
+        Method to remove an active listener
+        """
         try:
             assert self.context == "listener"
-        except:
+        except AssertionError:
             print("wrong context")
             return
         try:
             assert len(cmd.split()) == 1
-        except:
+        except AssertionError:
             cmd_help("listener", "remove")
             return
         cmd = cmd.split()
@@ -125,11 +193,14 @@ class MainMenu(cmd.Cmd):
         self.remove_listener(listener_uuid)
 
     def do_list(self, cmd):
-        try:
-            assert self.context != None
-        except:
+        """
+        Method to list agents, listeners, and payloads
+        """
+
+        if self.context is None:
             print("No context specified")
             return
+
         if self.context == "listener":
             self.list_listener()
         if self.context == "payload":
@@ -138,24 +209,31 @@ class MainMenu(cmd.Cmd):
             self.list_agent()
 
     def do_ls(self, cmd):
+        """
+        Alias for the list command
+        """
         self.do_list(cmd)
 
     def do_interact(self, cmd):
+        """
+        Method to spawn an interactive terminal session
+        with a connected agent
+        """
         try:
             assert self.context == "agent"
-        except:
+        except AssertionError:
             print("wrong context")
             return
         try:
             assert len(cmd.split()) == 1
-        except:
+        except AssertionError:
             cmd_help("agent", "interact")
             return
         cmd = cmd.split()
         uuid = cmd[0]
         try:
             assert uuid in self.agents
-        except:
+        except AssertionError:
             print("Agent not found!")
             return
 
@@ -164,17 +242,22 @@ class MainMenu(cmd.Cmd):
             interactive_cmd = input(uuid[0:7] + " > ")
             if interactive_cmd == "quit":
                 break
+            # Add the requested command to the agent's command queue
             self.agents[uuid].add_command(interactive_cmd)
 
     def do_get(self, cmd):
+        """
+        Method to request a file transfer from an agent to the
+        server
+        """
         try:
             assert self.context == "agent"
-        except:
+        except AssertionError:
             print("wrong context")
             return
         try:
             assert len(cmd.split()) == 2
-        except:
+        except AssertionError:
             cmd_help("agent", "get")
             return
         cmd = cmd.split()
@@ -182,7 +265,7 @@ class MainMenu(cmd.Cmd):
         file = cmd[1]
         try:
             assert uuid in self.agents
-        except:
+        except AssertionError:
             print("Agent not found!")
             return
 
@@ -193,14 +276,17 @@ class MainMenu(cmd.Cmd):
         self.agents[uuid].add_task(json.dumps(get_task))
 
     def do_use(self, cmd):
+        """
+        Method to select a payload
+        """
         try:
             assert self.context == "payload"
-        except:
+        except AssertionError:
             print("wrong context")
             return
         try:
             assert len(cmd.split()) == 1
-        except:
+        except AssertionError:
             cmd_help("payload", "use")
             return
         cmd = cmd.split()
@@ -213,16 +299,20 @@ class MainMenu(cmd.Cmd):
             print("Payload not found!")
 
     def do_info(self, cmd):
+        """
+        Method to display information about a loaded payload or
+        display enumerated data from an agent
+        """
         try:
-            assert self.context == "payload" or self.context == "agent"
-        except:
+            assert self.context in ["payload", "agent"]
+        except AssertionError:
             print("wrong context")
             return
         if self.context == "payload":
             if not self.payload:
                 try:
                     assert len(cmd.split()) == 1
-                except:
+                except AssertionError:
                     cmd_help("payload", "info")
                     return
                 cmd = cmd.split()
@@ -236,32 +326,35 @@ class MainMenu(cmd.Cmd):
         if self.context == "agent":
             try:
                 assert len(cmd.split()) == 1
-            except:
+            except AssertionError:
                 cmd_help("agent", "info")
                 return
             cmd = cmd.split()
             uuid = cmd[0]
             try:
                 assert uuid in self.agents
-            except:
+            except AssertionError:
                 print("Agent not found!")
                 return
             self.agent_info(self.agents[uuid])
 
     def do_set(self, cmd):
+        """
+        Method that allows the user to modify payload settings
+        """
         try:
             assert self.context == "payload"
-        except:
+        except AssertionError:
             print("wrong context")
             return
         try:
-            assert self.payload != None
-        except:
+            assert self.payload is not None
+        except AssertionError:
             print("No payload selected!")
             return
         try:
             assert len(cmd.split()) >= 2
-        except:
+        except AssertionError:
             cmd_help("payload", "set")
             return
         cmd = cmd.split()
@@ -269,32 +362,37 @@ class MainMenu(cmd.Cmd):
         value = " ".join(cmd[1:])
         try:
             assert option in self.payload.options
-        except:
+        except AssertionError:
             print("Invalid option selected!")
             return
-        if value == "False" or value == "false":
+
+        # Translate between use input and special python types
+        if value in ["False", "false", "0", 0]:
             self.payload.options[option]["value"] = False
-        elif value == "True" or value == "true":
+        elif value in ["True", "true", "1", 1]:
             self.payload.options[option]["value"] = True
-        elif value == "None" or value == "none":
+        elif value in ["None", "none"]:
             self.payload.options[option]["value"] = None
         else:
             self.payload.options[option]["value"] = value
 
     def do_run(self, cmd):
+        """
+        Method to deploy a payload to a selected agent
+        """
         try:
             assert self.context == "payload"
-        except:
+        except AssertionError:
             print("wrong context")
             return
         try:
-            assert self.payload != None
-        except:
+            assert self.payload is not None
+        except AssertionError:
             print("No payload selected!")
             return
         try:
             assert len(cmd.split()) == 2
-        except:
+        except AssertionError:
             cmd_help("payload", "run agent")
             # TODO: implement listener-level payload run
             # cmd_help('payload', 'run listener')
@@ -305,12 +403,16 @@ class MainMenu(cmd.Cmd):
             uuid = cmd[1]
             try:
                 assert uuid in self.agents
-            except:
+            except AssertionError:
                 print("Agent not found!")
                 return
             self.agents[uuid].add_payload(script)
 
     def last_seen_str(self, lastseen):
+        """
+        Method to convert agents lastseen time (UNIX format) to
+        something more human-readable
+        """
         current_time = time.time()
         delta = current_time - lastseen
 
@@ -320,16 +422,19 @@ class MainMenu(cmd.Cmd):
         if delta < 60:
             return str(math.trunc(delta)) + " seconds ago"
 
-        if delta >= 60 and delta < 3600:
+        if 60 <= delta < 3600:
             return str(math.trunc(delta / 60)) + " minutes ago"
 
-        if delta >= 3600 and delta < 86400:
+        if 3600 <= delta < 86400:
             return str(math.trunc(delta / 3600)) + " hours ago"
 
         if delta >= 86400:
             return str(math.trunc(delta / 86400)) + " days ago"
 
     def list_listener(self):
+        """
+        Method to list all active listeners
+        """
         table = Table(show_header=True, header_style="bold magenta")
         table.add_column("UUID")
         table.add_column("Listen Host")
@@ -342,6 +447,9 @@ class MainMenu(cmd.Cmd):
         self.console.print(table)
 
     def list_payload(self):
+        """
+        Method to list all loaded payloads
+        """
         table = Table(show_header=True, header_style="bold magenta")
         table.add_column("Name")
         table.add_column("Description")
@@ -350,6 +458,9 @@ class MainMenu(cmd.Cmd):
         self.console.print(table)
 
     def list_agent(self):
+        """
+        Method to list all agents that have connected at least once to a listener
+        """
         table = Table(show_header=True, header_style="bold magenta")
         table.add_column("UUID")
         table.add_column("Last Observed")
@@ -363,6 +474,9 @@ class MainMenu(cmd.Cmd):
         self.console.print(table)
 
     def agent_info(self, agent):
+        """
+        Method to display all auto-enumerated agent information
+        """
         if self.stdout_format == "table":
             table = Table(
                 show_header=True, header_style="bold magenta", title="Agent Options"
@@ -412,6 +526,9 @@ class MainMenu(cmd.Cmd):
             self.console.print(agent.enumdata)
 
     def add_listener(self, host, port, secret):
+        """
+        Method used to add a new listener
+        """
         try:
             assert os.path.exists("reave/data/cert.pem")
         except AssertionError:
@@ -424,6 +541,9 @@ class MainMenu(cmd.Cmd):
         self.listeners.append(l)
 
     def remove_listener(self, listener_uuid):
+        """
+        Method to destroy a listener
+        """
         selected_listener = (
             _[0]
             if (
@@ -447,15 +567,41 @@ class MainMenu(cmd.Cmd):
             self.console.print("[red]Listener not found![/red]")
 
     def close_listeners(self):
-        # Stop all listeners
-        for listener in self.listeners:
-            listener.close()
+        """
+        Method to stop all active listeners for a graceful
+        shutdown
+        """
+        if self.listeners:
+            self.console.print(
+                "[blue]Executing graceful shutdown of all active listeners...[/blue]"
+            )
+            for listener in self.listeners:
+                print(
+                    "[blue]" + str(listener.uuid) + " - Listener shutting down[/blue]"
+                )
+                listener.close()
 
     def do_EOF(self, line):
+        """
+        Handle EOF
+        """
+        return True
+
+    def do_quit(self, cmd):
+        """
+        Method to exit reave
+        """
+        self.close_listeners()
+        sys.stdout.write("\n")
+        self.active = False
         return True
 
     def cmdloop_ki(self):
-        while True:
+        """
+        Main cmdloop that catches KeyboardInterrupt and
+        shuts down reave gracefully
+        """
+        while self.active:
             try:
                 self.cmdloop()
             except KeyboardInterrupt:

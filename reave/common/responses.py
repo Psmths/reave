@@ -2,6 +2,11 @@ import magic
 
 
 def serve_http(proto_msg):
+    """
+    If reave detects that an incoming connection is not coming from
+    an agent (incorrect or no protocol observed) it will serve a
+    static webpage located in the data/www/ directory
+    """
     mime = magic.Magic(mime=True)
 
     get_req = proto_msg.split("\n", 1)[0]

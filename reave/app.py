@@ -1,27 +1,26 @@
 import os
 import logging
 import readline
-import threading
 import configparser
 from sys import exit
-from rich import print
 from rich.console import Console
 from common.payloads import Payloads
 from common.mainmenu import MainMenu
 
 
-if __name__ == "__main__":
-
+def run():
     # Start the console
     console = Console()
 
     # Check if config file is present
     config = configparser.ConfigParser()
-    config_file = os.path.join(os.path.dirname(__file__), 'conf', 'reave.conf')
+    config_file = os.path.join(os.path.dirname(__file__), "conf", "reave.conf")
     try:
         assert os.path.exists(config_file)
     except AssertionError:
-        console.print("[red]Configuration file not found! Did you run the installer?[/red]")
+        console.print(
+            "[red]Configuration file not found! Did you run the installer?[/red]"
+        )
         exit(0)
 
     # Read config parameters
@@ -30,7 +29,10 @@ if __name__ == "__main__":
         _LOGFILE = config["reave"]["logfile"]
         _CMD_HISTFILE = config["reave"]["histfile"]
         _CMD_HISTFILE_SIZE = int(config["reave"]["hist_size"])
-    except:
+    except KeyError:
+        console.print("[red]Error reading the configuration[/red]")
+        exit(0)
+    except ValueError:
         console.print("[red]Error reading the configuration[/red]")
         exit(0)
 
@@ -67,7 +69,11 @@ if __name__ == "__main__":
     )
 
     MainMenu(agents, listeners, payloads).cmdloop_ki()
-    
+
     readline.set_history_length(_CMD_HISTFILE_SIZE)
     readline.write_history_file(_CMD_HISTFILE)
     logging.info("Shutting down...")
+
+
+if __name__ == "__main__":
+    run()

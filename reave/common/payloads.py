@@ -7,11 +7,18 @@ from rich.table import Table
 
 
 class Payloads:
+    """
+    Handle loading and configuration of payloads
+    """
+
     def __init__(self):
         self.loaded_payloads = {}
         self.logger = logging.getLogger(__name__)
 
     def load_payloads(self):
+        """
+        Load all payloads in the payload directory
+        """
         logging.info("Loading payloads")
         root_path = self.get_root()
         payload_path = root_path / "reave" / "payloads"
@@ -23,18 +30,27 @@ class Payloads:
                     self.loaded_payloads[payload_name] = imp.load_source(
                         payload_name, root + "/" + file
                     ).Payload()
-        logging.info("Loaded " + str(len(self.loaded_payloads)) + " payload scripts!")
+        logging.info("Loaded %s payload scripts!", str(len(self.loaded_payloads)))
 
     def get_root(self) -> Path:
+        """
+        Get path root
+        """
         return Path(__file__).parent.parent.parent
 
     def get_payload_by_name(self, payload_name):
+        """
+        Return payload object from its name
+        """
         try:
             return self.loaded_payloads[payload_name]
         except KeyError:
             return False
 
     def print_payloads_info(self, p):
+        """
+        Print payload information
+        """
         console = Console()
 
         table = Table(show_header=False, header_style="bold magenta")

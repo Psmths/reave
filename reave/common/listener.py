@@ -1,3 +1,4 @@
+import os
 import socket
 import uuid
 import ssl
@@ -24,19 +25,23 @@ class Listener(object):
      - Sending commands and payloads to agents
      - Receiving files from agents
      - Handling protocol messages as specified in protcol.py
+
+     The listener leverages TLS to encrypt all traffic between reave and
+     its clients. The certificate file used for this encryption should
+     have been generated as a part of the installation process.
     """
 
     def __init__(self, port, host, secret, agents, listeners):
-        self.uuid = str(uuid.uuid4())[0:4]
-        self.host = host
-        self.port = port
-        self.agents = agents
-        self.listeners = listeners
-        self.secret = secret
-        self._close = False
+        self.uuid = str(uuid.uuid4())[0:4]  # Listener's UUID truncated to 4 chars
+        self.host = host  # Host the listener is bound to
+        self.port = port  # Port the listener is bound to
+        self.agents = agents  # List of agents associated to this listener
+        self.listeners = listeners  # List of all listeners
+        self.secret = secret  # "secret" key used to authanticate incoming agents
+        self._close = False  # Bool to gracefully close listener
 
         self.logger = logging.getLogger(__name__)
-        logging.debug(str(self.uuid) + " Listener spawned")
+        logging.debug("%s Listener spawned", str(self.uuid))
 
     def get_response(self, json_stub):
         """
@@ -51,9 +56,9 @@ class Listener(object):
         response = json_stub["data"]
         status = json_stub["status"]
 
-        for uuid, agent in self.agents.items():
-            if uuid == agent_uuid and response:
-                agent.update_lastseen()
+        for u, a in self.agents.items():
+            if u == agent_uuid and response:
+                a.update_lastseen()
 
         if status == "AGENT_ERROR":
             logging.error(agent_uuid + " AGENT_ERROR: " + response)
@@ -73,21 +78,21 @@ class Listener(object):
         agent's lastseen time.
         """
         agent_uuid = json_stub["uuid"]
-        logging.debug(str(self.uuid) + " Associating agent with UUID: " + agent_uuid)
+        logging.debug("%s Associating agent", str(self.uuid))
 
         # Check if the agent is already associated
-        for uuid, agent in self.agents.items():
-            if uuid == agent_uuid:
+        for u, a in self.agents.items():
+            if u == agent_uuid:
                 logging.debug(
-                    str(self.uuid) + " Agent already seen! Updating lastseen time."
+                    "%s Agent already seen! Updating lastseen time.", str(self.uuid)
                 )
-                agent.update_lastseen()
+                a.update_lastseen()
                 return Protocol.ACK
 
         self.agents[agent_uuid] = Agent(
             self, agent_uuid, time.time(), json_stub["enumdata"]
         )
-        logging.debug(str(self.uuid) + " Agent associated successfully.")
+        logging.debug("%s Agent associated successfully.", str(self.uuid))
         return Protocol.ACK
 
     def handle_beacon(self, json_stub):
@@ -102,10 +107,10 @@ class Listener(object):
         commands or payloads, these will be set to None.
         """
         agent_uuid = json_stub["uuid"]
-        for uuid, agent in self.agents.items():
-            if uuid == agent_uuid:
-                agent.update_lastseen()
-                command = agent.get_command()
+        for u, a in self.agents.items():
+            if u == agent_uuid:
+                a.update_lastseen()
+                command = a.get_command()
                 if command:
                     response_packet_stub = {
                         "status": "OK",
@@ -116,7 +121,7 @@ class Listener(object):
                     cmd_pkt = "_response" + json.dumps(response_packet_stub)
                     return cmd_pkt.encode()
 
-                payload = agent.get_payload()
+                payload = a.get_payload()
                 if payload:
                     response_packet_stub = {
                         "status": "OK",
@@ -127,7 +132,7 @@ class Listener(object):
                     cmd_pkt = "_response" + json.dumps(response_packet_stub)
                     return cmd_pkt.encode()
 
-                task = agent.get_task()
+                task = a.get_task()
                 if task:
                     response_packet_stub = {
                         "status": "OK",
@@ -175,7 +180,7 @@ class Listener(object):
             except KeyError:
                 return False
         elif "_response" in proto_msg:
-            logging.debug(str(self.uuid) + " Handling response packet ")
+            logging.debug("%s Handling response packet ", str(self.uuid))
             try:
                 json_stub = json.loads(proto_msg[9:])
             except:
@@ -190,9 +195,15 @@ class Listener(object):
         return
 
     def remove_from_list(self):
+        """
+        Remove this listener from the list of all listeners
+        """
         self.listeners.remove(self)
 
     def main_thread(self):
+        """
+        Primary listener loop
+        """
         try:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -234,11 +245,13 @@ class Listener(object):
                 context.verify_mode = ssl.CERT_OPTIONAL
 
                 config = configparser.ConfigParser()
-                config_file = os.path.join(os.path.dirname(__file__), 'conf', 'reave.conf')
+                config_file = os.path.join(
+                    os.path.dirname(__file__), "../conf", "reave.conf"
+                )
                 try:
                     assert os.path.exists(config_file)
                 except AssertionError:
-                    console.print("[red]Configuration file not found! Did you run the installer?[/red]")
+                    print("Configuration file not found! Did you run the installer?")
                     exit(0)
 
                 config = configparser.ConfigParser()
@@ -250,7 +263,7 @@ class Listener(object):
                 )
                 wrapped_socket.settimeout(10)
                 threading.Thread(
-                    target=self.listenToClient, args=(wrapped_socket,)
+                    target=self.listen_to_client, args=(wrapped_socket,)
                 ).start()
             except socket.timeout:
                 pass
@@ -260,10 +273,15 @@ class Listener(object):
             except OSError:
                 pass
         if self._close:
-            logging.debug(str(self.uuid) + " Listener caught interrupt, closing socket")
+            logging.debug(
+                "%s Listener caught interrupt, closing socket", str(self.uuid)
+            )
             self.close()
 
     def close(self):
+        """
+        Gracefully shut down the listener
+        """
         # Disconnect all agents
         self._close = True
         # Close my socket
@@ -276,7 +294,10 @@ class Listener(object):
             pass
         del self
 
-    def listenToClient(self, client):
+    def listen_to_client(self, client):
+        """
+        Method to handle client communication
+        """
         size = 16384
         while not self._close:
             try:
@@ -286,7 +307,7 @@ class Listener(object):
                     if response:
                         client.send(response)
                 else:
-                    logging.debug(str(self.uuid) + " Client disconnect")
+                    logging.debug("%s Client disconnect", str(self.uuid))
                     client.close()
                     return False
             except socket.timeout:
@@ -304,6 +325,8 @@ class Listener(object):
                 client.close()
                 return False
         if self._close:
-            logging.debug(str(self.uuid) + " Listener caught interrupt, closing client")
+            logging.debug(
+                "%s Listener caught interrupt, closing client", str(self.uuid)
+            )
             client.close()
             return False

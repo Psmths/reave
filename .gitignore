@@ -1,5 +1,6 @@
 .reave_history
 data/
+.pylint
 *.pcap
 .reave_log
 # Byte-compiled / optimized / DLL files

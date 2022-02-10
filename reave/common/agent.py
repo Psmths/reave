@@ -75,8 +75,8 @@ class Agent:
         """
         if self.task_queue.empty():
             return False
-        else:
-            return self.task_queue.get()
+
+        return self.task_queue.get()
 
     def add_payload(self, payload_script):
         """
@@ -92,8 +92,8 @@ class Agent:
         """
         if self.command_queue.empty():
             return False
-        else:
-            return self.command_queue.get()
+
+        return self.command_queue.get()
 
     def get_payload(self):
         """
@@ -102,5 +102,5 @@ class Agent:
         """
         if self.payload_queue.empty():
             return False
-        else:
-            return self.payload_queue.get()
+
+        return self.payload_queue.get()

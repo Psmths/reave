@@ -44,6 +44,9 @@ doc = {
 
 
 def cmd_help(context, command):
+    """
+    Provide help for a singular command
+    """
     print(
         "[yellow]"
         + doc[context][command][0]
@@ -54,6 +57,9 @@ def cmd_help(context, command):
 
 
 def context_help(context):
+    """
+    Provide help for an entire context
+    """
     if context:
         for cmd, tooltip in doc[context].items():
             print(
