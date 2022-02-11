@@ -9,8 +9,10 @@ import threading
 from rich import print
 from rich.console import Console
 from rich.table import Table
+from humanfriendly import format_size
 from common.listener import Listener
 from common.cmdhelp import cmd_help, context_help
+
 
 
 class MainMenu(cmd.Cmd):
@@ -484,7 +486,10 @@ class MainMenu(cmd.Cmd):
             table.add_column("Option")
             table.add_column("Value")
             for key, value in json.loads(agent.enumdata["agent_options"]).items():
-                table.add_row(key, str(value))
+                if key in ["TRANSFER_BLOCK_SIZE"]:
+                    table.add_row(key, format_size(int(value)))
+                else:
+                    table.add_row(key, str(value))
             self.console.print(table)
 
             if "host_local_users" in agent.enumdata["host_data"]:
@@ -517,8 +522,8 @@ class MainMenu(cmd.Cmd):
                         mount["mountpoint"],
                         mount["name"],
                         mount["type"],
-                        mount["size"],
-                        mount["free"],
+                        format_size(int(mount["size"])),
+                        format_size(int(mount["free"])),
                     )
                 self.console.print(table)
 
