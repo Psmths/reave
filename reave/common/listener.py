@@ -31,14 +31,15 @@ class Listener(object):
      have been generated as a part of the installation process.
     """
 
-    def __init__(self, port, host, secret, agents, listeners):
+    def __init__(self, port, host, secret, cmd):
         self.uuid = str(uuid.uuid4())[0:4]  # Listener's UUID truncated to 4 chars
         self.host = host  # Host the listener is bound to
         self.port = port  # Port the listener is bound to
-        self.agents = agents  # List of agents associated to this listener
-        self.listeners = listeners  # List of all listeners
+        self.agents = cmd.agents  # List of agents associated to this listener
+        self.listeners = cmd.listeners  # List of all listeners
         self.secret = secret  # "secret" key used to authanticate incoming agents
         self._close = False  # Bool to gracefully close listener
+        self.cmd = cmd
 
         self.logger = logging.getLogger(__name__)
         logging.debug("%s Listener spawned", str(self.uuid))
@@ -66,8 +67,28 @@ class Listener(object):
             return Protocol.ACK
 
         method = getattr(Protocol, json_stub["status"])
+
         if method:
-            return method(json_stub)
+            r = method(json_stub)
+            interacting = self.cmd.interactive
+            if "STDOUT" in r:
+                if not interacting: self.cmd.say("========== GOT STDOUT FROM AGENT ==========")
+                if interacting: 
+                    for line in r[2].split('\n'):
+                        self.cmd.say("       | " + line)
+                else:
+                    self.cmd.say(r[2])
+                if not interacting: self.cmd.say("===========================================")
+            if "STDERR" in r:
+                if not interacting: self.cmd.say("========== GOT STDERR FROM AGENT ==========")
+                if interacting: 
+                    for line in r[2].split('\n'):
+                        self.cmd.say("       | " + line)
+                else:
+                    self.cmd.say(r[2])
+                if not interacting: self.cmd.say("===========================================")
+
+            return r[0]
 
         return Protocol.ERR_UNKNOWN_METHOD
 

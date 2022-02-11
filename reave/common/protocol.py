@@ -20,16 +20,14 @@ class Protocol:
 
     def STDOUT(json_stub):
         if json_stub["data"]:
-            print(json_stub["data"])
-        return '_response{"status" : "ACK"}'.encode()
+            return ['_response{"status" : "ACK"}'.encode(), "STDOUT", json_stub["data"]]
 
     def STDERR(json_stub):
         if json_stub["data"]:
-            print("[red]" + json_stub["data"] + "[/red]")
-        return '_response{"status" : "ACK"}'.encode()
+            return ['_response{"status" : "ACK"}'.encode(), "STDERR", json_stub["data"]]
 
     def AGENT_ERROR(json_stub):
-        return '_response{"status" : "ACK"}'.encode()
+        return ['_response{"status" : "ACK"}'.encode()]
 
     # TODO: Stateful file transfer to handle interruptions
     def FILE_TRANSFER(json_stub):
@@ -48,4 +46,4 @@ class Protocol:
             b.write(blob_data)
         response_packet_stub = {"status": "ACK", "offset": blob_offset}
         cmd_pkt = "_response" + json.dumps(response_packet_stub)
-        return cmd_pkt.encode()
+        return [cmd_pkt.encode()]

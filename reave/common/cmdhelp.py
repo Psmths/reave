@@ -75,6 +75,7 @@ def context_help(context):
         print(
             "[yellow]Quickstart: https://github.com/Psmths/reave/blob/main/doc/commands.md\n[/yellow]"
         )
-        print("[yellow]Available contexts:[/yellow]")
+        print("[yellow]To get started, enter a context. Available contexts:\n[/yellow]")
         for cmd in doc:
             print("[yellow]\t" + cmd + "[/yellow]")
+        print("\n[yellow]Enter quit  or Ctrl-C to exit reave.[/yellow]")
