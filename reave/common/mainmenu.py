@@ -1,4 +1,3 @@
-from importlib.abc import TraversableResources
 import os
 from cmd2 import Cmd
 import sys
@@ -35,12 +34,11 @@ class MainMenu(Cmd):
         self.agent = None  # Current agent
         self.prompt = "> "  # Prompt for command line interfact
         self.stdout_format = "table"  # Formatting option for data output
-        self.active = True  # Bool to exit cmdloop gracefully
         self.interactive = False
 
     def say(self, msg):
         if self.terminal_lock.acquire(blocking=False):
-            self.async_alert(msg + "\n")
+            self.async_alert(msg)
             self.terminal_lock.release()
 
     def complete_interact(self, text, line, begidx, endidx):
@@ -612,17 +610,8 @@ class MainMenu(Cmd):
         """
         self.close_listeners()
         sys.stdout.write("\n")
-        self.active = False
         sys.exit(0)
 
     def sigint_handler(self, signum: int, frame) -> None:
         if signum == 2:
             self.do_quit("ki")
-
-    def cmdloop_ki(self):
-        """
-        Main cmdloop that catches KeyboardInterrupt and
-        shuts down reave gracefully
-        """
-        while self.active:
-            self.cmdloop()

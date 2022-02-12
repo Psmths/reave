@@ -224,7 +224,7 @@ class Agent:
             process = subprocess.Popen(['python3', "-c", script],
                                 stdout=subprocess.PIPE, 
                                 stderr=subprocess.PIPE)
-            stdout, stderr = process.communicate()
+            stdout, stderr = process.communicate() # TODO: Non-blocking queue for pipe communications
             
             if (stdout):
                 self.respond(stdout.decode(), "STDOUT")

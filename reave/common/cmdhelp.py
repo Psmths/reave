@@ -28,7 +28,7 @@ doc = {
         "create": ["create", "Start creating a new agent script."],
         "get": [
             "get <uuid> <file>",
-            "Transfer file from the agent endpoint to downloads directory",
+            "Transfer file from the agent endpoint to downloads directory as specified in reave.conf.\n\tThe file will be called <filename>.<agent uuid>",
         ],
     },
     "listener": {

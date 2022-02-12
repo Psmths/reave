@@ -37,7 +37,7 @@ class Protocol:
         download_directory = config["reave"]["download_directory"]
         blob_data = zlib.decompress(base64.b85decode(json_stub["data"]))
         blob_offset = json_stub["offset"]
-        blob_name = json_stub["filename"]
+        blob_name = json_stub["filename"] + "." + json_stub["uuid"]
         if not os.path.exists(download_directory):
             os.makedirs(download_directory)
         file = os.path.join(download_directory, blob_name)
