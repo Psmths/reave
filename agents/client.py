@@ -126,7 +126,6 @@ class Agent:
 
         try:
             logging.debug("Sending packet")
-            logging.debug("AGENT    : " + msg[0:180])
             self.ssock.send(msg.encode())
             response = self.ssock.recv()
             logging.debug("LISTENER : " + response.decode())
