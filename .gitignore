@@ -2,7 +2,7 @@
 data/
 .pylint
 *.pcap
-.reave_log
+.reave_log*
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
