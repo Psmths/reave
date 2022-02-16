@@ -6,6 +6,7 @@ from sys import exit
 from rich.console import Console
 from payloads import Payloads
 from menu import menu
+from logging.handlers import RotatingFileHandler
 
 
 def run():
@@ -27,23 +28,27 @@ def run():
     config.read(config_file)
     try:
         _LOGFILE = config["reave"]["logfile"]
+        _LOGFILE_MAX_SIZE_BYTES = int(config["reave"]["logfile_max_bytes"])
         _CMD_HISTFILE = config["reave"]["histfile"]
         _CMD_HISTFILE_SIZE = int(config["reave"]["hist_size"])
+        
     except KeyError:
         console.print("[red]Error reading the configuration[/red]")
         exit(0)
     except ValueError:
         console.print("[red]Error reading the configuration[/red]")
         exit(0)
-
-    # TODO: Add log rotation
+    print(_LOGFILE_MAX_SIZE_BYTES)
+    handler = RotatingFileHandler(_LOGFILE, maxBytes=_LOGFILE_MAX_SIZE_BYTES, backupCount=1)
+    logger = logging.getLogger()
     logging.basicConfig(
         filename=_LOGFILE,
         filemode="a",
         format="%(asctime)s [%(levelname)s] [%(module)s] %(message)s",
     )
-    logging.getLogger().setLevel(logging.DEBUG)
-
+    logger.setLevel(logging.DEBUG)
+    # logger.addHandler(handler)
+    
     agents = {}
     listeners = []
     payloads = Payloads()

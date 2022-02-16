@@ -20,8 +20,7 @@ class Payloads:
         Load all payloads in the payload directory
         """
         logging.info("Loading payloads")
-        root_path = self.get_root()
-        payload_path = root_path / "reave" / "payloads"
+        payload_path = "reave/payloads"
         for root, dirs, files in os.walk(payload_path):
             for file in files:
                 if file.endswith(".py"):
@@ -31,12 +30,6 @@ class Payloads:
                         payload_name, root + "/" + file
                     ).Payload()
         logging.info("Loaded %s payload scripts!", str(len(self.loaded_payloads)))
-
-    def get_root(self) -> Path:
-        """
-        Get path root
-        """
-        return Path(__file__).parent.parent.parent
 
     def get_payload_by_name(self, payload_name):
         """

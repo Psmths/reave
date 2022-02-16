@@ -2,5 +2,6 @@
 download_directory = /tmp/reave_download
 cert_path = reave/data/cert.pem
 logfile = .reave_log
+logfile_max_bytes
 histfile = .reave_history
 hist_size = 1000

@@ -183,7 +183,7 @@ class Listener(object):
         to the appropriate handler. If the client is not an agent, it
         will serve a static website under reave/resource/www.
         """
-        logging.debug(str(self.uuid) + " Handling protocol message: " + proto_msg)
+        logging.debug(str(self.uuid) + " Handling protocol message")
         if "_associate" in proto_msg:
             try:
                 json_stub = json.loads(proto_msg[10:])
