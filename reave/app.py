@@ -5,7 +5,7 @@ import configparser
 from sys import exit
 from rich.console import Console
 from common.payloads import Payloads
-from common.mainmenu import MainMenu
+from common.menu import menu
 
 
 def run():
@@ -68,7 +68,7 @@ def run():
         [/yellow]"""
     )
 
-    MainMenu(agents, listeners, payloads).cmdloop()
+    menu(agents, listeners, payloads).cmdloop()
 
     readline.set_history_length(_CMD_HISTFILE_SIZE)
     readline.write_history_file(_CMD_HISTFILE)

