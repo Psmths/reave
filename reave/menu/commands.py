@@ -53,10 +53,14 @@ def do_add(self, cmd):
     port = cmd[1]
     secret = cmd[2]
     try:
-        # TODO: Check port before a listener is attempted
         port = int(port)
     except ValueError:
         cmd_help("listener", "add")
+        return
+    try:
+        assert 1 < port < 65535
+    except AssertionError:
+        print("Invalid port range!")
         return
     self.add_listener(host, port, secret)
 
