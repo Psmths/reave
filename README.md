@@ -11,19 +11,19 @@
 </p>
 <hr>
 
-Reave is a post-exploitation framework tailored for hypervisor endpoints. It is currently under development. 
+Reave is a post-exploitation framework tailored for hypervisor endpoints, written in Python. It is currently under development. 
 
-Reave follows a traditional listener/agent model, where the user may set up multiple listeners of various flavors that accept any number of agents. The framework currently provides a Python agent and supports the following objectives:
+Reave follows a traditional listener/agent model, where the user may set up multiple listeners that accept any number of agents. The framework currently provides a Python agent and supports the following objectives:
 
- - Interactive terminal sessions
- - Automatic enumeration of hypervisor hosts, including:
+ - Interactive terminal sessions with agents
+ - Automatic enumeration of hypervisors, including:
    - What guest systems are installed
    - What network shares and datastores are mounted
    - What local users are associated
    - What domain the hypervisor is a part of
  - Modular payloads supporting capabilities such as:
    - Exfiltration: of datastores, files, virtual disks.
-   - Persistence: Adding, modifying, deleting local users, installing SSH keys and reverse shells
+   - Persistence: Adding, modifying, deleting local users, installing SSH keys and spawning reverse shells
    - Enumeration: Further network scanning, etc. 
 
 The goal of Reave is to provide a framework one can leverage to automate and expedite pentesting campaigns in environments that are either heavily virtualized, or where target/critical infrastructure is hosted on hypervisor platforms such as ESXi and Proxmox. 
@@ -58,7 +58,7 @@ On the server, simply run app.py:
 python3 reave/app.py
 ```
 
-On your client of choice, upload `reave/agents/client.py` and run the file. The following configuration options are available:
+On the target endpoint, upload the Python agent, located under `agents/client.py`, and execute it. The following configuration options are available:
 
  - `_LISTENER_HOST` Hostname/IP of the server
  - `_LISTENER_PORTS` List of ports that the agent will attempt to connect to in round-robin fashion
@@ -72,9 +72,15 @@ On your client of choice, upload `reave/agents/client.py` and run the file. The 
  - `PID_FILE` PID file the agent uses to ensure it isn't already running on the endpoint 
  - `TRANSFER_BLOCK_SIZE` Block size the agent will use when transfering files to the server 
 
+When an agent has successfully associated to a listener, you can view it by entering the `agent` context and issuing the command `list` (or `ls`). To view all of the information that Reave has automatically enumerated from the endpoint issue the command `info <agent uuid>`. For instance, if your agent has a uuid of `18ab`, you would use `info 18ab`. 
+
+To grab an arbitrary file from the agent, you can issue `get 18ab /my/test/file`.
+
+To spawn an interactive shell on the endpoint, you could issue `interact 18ab`.
+
 # Command Line Interface
 
-The command line has three distinct contexts:
+The command line has three distinct contexts from wich you can control separate operations:
 
  - Listener
  - Payload
@@ -97,12 +103,11 @@ Exit this context by using command `back`
 To enter the agent context, use command `agent`. From there, several options are available:
 
 ```
-list                    List all agents
-interact <uuid>         Interactive terminal session with agent. 
-                        'quit' to exit.
-create                  Start creating a new agent script.
-                        Will write to ./data/ directory
-get <uuid> <file>       Transfer file from the agent endpoint to downloads directory
+list                                List all agents (alias: ls)
+info <uuid>                         List agent info, including any auto-enumerated data
+interact <uuid>                     Interactive terminal session with agent. 
+                                    'quit' to exit.
+get <uuid> <file>                   Transfer file from the agent endpoint to downloads directory
 ```
 
 Exit this context by using command `back`
@@ -117,7 +122,6 @@ info <name>             Get information about a payload
 use <name>              Select payload for use
 set <option> <value>    Set payload option to value
 run agent <uuid>        Run the payload on an individual agent
-run listener <uuid>     Run the payload on all agents on the listener
 ```
 
 Exit this context by using command `back`
