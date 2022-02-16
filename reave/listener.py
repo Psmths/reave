@@ -9,9 +9,9 @@ import json
 import base64
 import configparser
 from rich import print
-from common.agent import Agent
-from common.responses import serve_http
-from common.protocol import Protocol
+from agent import Agent
+from responses import serve_http
+from protocol import Protocol
 
 
 class Listener(object):
@@ -267,7 +267,7 @@ class Listener(object):
 
                 config = configparser.ConfigParser()
                 config_file = os.path.join(
-                    os.path.dirname(__file__), "../conf", "reave.conf"
+                    os.path.dirname(__file__), "conf", "reave.conf"
                 )
                 try:
                     assert os.path.exists(config_file)

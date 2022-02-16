@@ -1,6 +1,6 @@
 import sys
 import json
-from common.cmdhelp import context_help, cmd_help
+from cmdhelp import context_help, cmd_help
 
 def do_help(self, cmd):
         """

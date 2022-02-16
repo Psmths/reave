@@ -4,8 +4,8 @@ import readline
 import configparser
 from sys import exit
 from rich.console import Console
-from common.payloads import Payloads
-from common.menu import menu
+from payloads import Payloads
+from menu import menu
 
 
 def run():
