@@ -1,9 +1,10 @@
 def do_listener(self, cmd):
-        """
-        Switches the active context to listener
-        """
-        self.context = "listener"
-        self.update_prompt()
+    """
+    Switches the active context to listener
+    """
+    self.context = "listener"
+    self.update_prompt()
+
 
 def do_agent(self, cmd):
     """
@@ -12,12 +13,14 @@ def do_agent(self, cmd):
     self.context = "agent"
     self.update_prompt()
 
+
 def do_payload(self, cmd):
     """
     Switches the active context to payload
     """
     self.context = "payload"
     self.update_prompt()
+
 
 def do_back(self, cmd):
     """

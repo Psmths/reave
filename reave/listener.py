@@ -72,21 +72,25 @@ class Listener(object):
             r = method(json_stub)
             interacting = self.cmd.interactive
             if "STDOUT" in r:
-                if not interacting: self.cmd.say("========== GOT STDOUT FROM AGENT ==========")
-                if interacting: 
-                    for line in r[2].split('\n'):
+                if not interacting:
+                    self.cmd.say("========== GOT STDOUT FROM AGENT ==========")
+                if interacting:
+                    for line in r[2].split("\n"):
                         self.cmd.say("       | " + line)
                 else:
                     self.cmd.say(r[2])
-                if not interacting: self.cmd.say("===========================================")
+                if not interacting:
+                    self.cmd.say("===========================================")
             if "STDERR" in r:
-                if not interacting: self.cmd.say("========== GOT STDERR FROM AGENT ==========")
-                if interacting: 
-                    for line in r[2].split('\n'):
+                if not interacting:
+                    self.cmd.say("========== GOT STDERR FROM AGENT ==========")
+                if interacting:
+                    for line in r[2].split("\n"):
                         self.cmd.say("       | " + line)
                 else:
                     self.cmd.say(r[2])
-                if not interacting: self.cmd.say("===========================================")
+                if not interacting:
+                    self.cmd.say("===========================================")
 
             return r[0]
 

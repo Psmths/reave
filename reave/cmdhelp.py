@@ -30,7 +30,10 @@ doc = {
             "get <uuid> <file>",
             "Transfer file from the agent endpoint to downloads directory as specified in reave.conf.\n\tThe file will be called <filename>.<agent uuid>",
         ],
-        "exfil": ["exfil <agent uuid> <datastore uuid>", "Compress and exfiltrate an entire datastore."],
+        "exfil": [
+            "exfil <agent uuid> <datastore uuid>",
+            "Compress and exfiltrate an entire datastore.",
+        ],
     },
     "listener": {
         "list": ["list", "List all active listeners."],

