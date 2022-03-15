@@ -332,19 +332,36 @@ def do_run(self, cmd):
         assert len(cmd.split()) == 2
     except AssertionError:
         cmd_help("payload", "run agent")
-        # TODO: implement listener-level payload run
-        # cmd_help('payload', 'run listener')
+        cmd_help("payload", "run listener")
         return
+
     cmd = cmd.split()
     script = self.payload.gen_payload()
+
     if cmd[0] == "agent":
-        uuid = cmd[1]
+        agent_uuid = cmd[1]
         try:
-            assert uuid in self.agents
+            assert agent_uuid in self.agents
         except AssertionError:
             print("Agent not found!")
             return
-        self.agents[uuid].add_payload(script)
+        self.agents[agent_uuid].add_payload(script)
+
+    if cmd[0] == "listener":
+        listener_uuid = cmd[1]
+        selected_listener = [x for x in self.listeners if x.uuid == listener_uuid]
+        try:
+            assert selected_listener
+        except AssertionError:
+            print("Listener not found!")
+            return
+
+        selected_agents = [
+            x for x in self.agents.values() if x.listener.uuid == listener_uuid
+        ]
+
+        for agent in selected_agents:
+            agent.add_payload(script)
 
 
 def do_EOF(self, line):

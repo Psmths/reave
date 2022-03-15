@@ -31,15 +31,17 @@ def run():
         _LOGFILE_MAX_SIZE_BYTES = int(config["reave"]["logfile_max_bytes"])
         _CMD_HISTFILE = config["reave"]["histfile"]
         _CMD_HISTFILE_SIZE = int(config["reave"]["hist_size"])
-        
+
     except KeyError:
         console.print("[red]Error reading the configuration[/red]")
         exit(0)
     except ValueError:
         console.print("[red]Error reading the configuration[/red]")
         exit(0)
-    print(_LOGFILE_MAX_SIZE_BYTES)
-    handler = RotatingFileHandler(_LOGFILE, maxBytes=_LOGFILE_MAX_SIZE_BYTES, backupCount=1)
+
+    handler = RotatingFileHandler(
+        _LOGFILE, maxBytes=_LOGFILE_MAX_SIZE_BYTES, backupCount=1
+    )
     logger = logging.getLogger()
     logging.basicConfig(
         filename=_LOGFILE,
@@ -48,7 +50,7 @@ def run():
     )
     logger.setLevel(logging.DEBUG)
     # logger.addHandler(handler)
-    
+
     agents = {}
     listeners = []
     payloads = Payloads()

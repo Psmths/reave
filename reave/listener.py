@@ -35,7 +35,7 @@ class Listener(object):
         self.uuid = str(uuid.uuid4())[0:4]  # Listener's UUID truncated to 4 chars
         self.host = host  # Host the listener is bound to
         self.port = port  # Port the listener is bound to
-        self.agents = cmd.agents  # List of agents associated to this listener
+        self.agents = cmd.agents  # List of agents associated
         self.listeners = cmd.listeners  # List of all listeners
         self.secret = secret  # "secret" key used to authanticate incoming agents
         self._close = False  # Bool to gracefully close listener
@@ -70,27 +70,19 @@ class Listener(object):
 
         if method:
             r = method(json_stub)
+            agent_uuid = json_stub["uuid"]
             interacting = self.cmd.interactive
             if "STDOUT" in r:
                 if not interacting:
                     self.cmd.say("========== GOT STDOUT FROM AGENT ==========")
-                if interacting:
-                    for line in r[2].split("\n"):
-                        self.cmd.say("       | " + line)
-                else:
-                    self.cmd.say(r[2])
-                if not interacting:
-                    self.cmd.say("===========================================")
             if "STDERR" in r:
                 if not interacting:
                     self.cmd.say("========== GOT STDERR FROM AGENT ==========")
-                if interacting:
-                    for line in r[2].split("\n"):
-                        self.cmd.say("       | " + line)
-                else:
-                    self.cmd.say(r[2])
-                if not interacting:
-                    self.cmd.say("===========================================")
+            for line in r[2].split("\n"):
+                if line.strip():
+                    self.cmd.say("(" + agent_uuid + ") | " + line)
+            if not interacting:
+                self.cmd.say("===========================================")
 
             return r[0]
 

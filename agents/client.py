@@ -15,8 +15,8 @@ import subprocess
 from random import randrange
 
 
-_LISTENER_HOST = "10.200.200.10"
-_LISTENER_PORTS = [8080, 1235, 9001]
+_LISTENER_HOST = "localhost"
+_LISTENER_PORTS = [8080, 1234, 9001]
 _LISTENER_SECRET = "whatever"
 _AGENT_LOGLEVEL = logging.DEBUG
 _AGENT_OPTIONS = {

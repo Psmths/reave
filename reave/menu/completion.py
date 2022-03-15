@@ -4,6 +4,7 @@ def complete_interact(self, text, line, begidx, endidx):
     """
     if self.context == "agent":
         return [i for i, a in self.agents.items() if i.startswith(text)]
+    return []
 
 
 def complete_info(self, text, line, begidx, endidx):
@@ -12,6 +13,7 @@ def complete_info(self, text, line, begidx, endidx):
     """
     if self.context == "agent":
         return [i for i, a in self.agents.items() if i.startswith(text)]
+    return []
 
 
 def complete_get(self, text, line, begidx, endidx):
@@ -20,6 +22,7 @@ def complete_get(self, text, line, begidx, endidx):
     """
     if self.context == "agent":
         return [i for i, a in self.agents.items() if i.startswith(text)]
+    return []
 
 
 def complete_remove(self, text, line, begidx, endidx):
@@ -28,6 +31,7 @@ def complete_remove(self, text, line, begidx, endidx):
     """
     if self.context == "listener":
         return [i.uuid for i in self.listeners if i.uuid.startswith(text)]
+    return []
 
 
 def complete_use(self, text, line, begidx, endidx):
@@ -36,3 +40,4 @@ def complete_use(self, text, line, begidx, endidx):
     """
     if self.context == "payload":
         return [i for i in self.payloads.loaded_payloads if i.startswith(text)]
+    return []
