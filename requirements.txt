@@ -1,4 +1,4 @@
 cmd2==2.4.2
 humanfriendly==10.0
 python_magic==0.4.27
-rich==13.1.0
+rich==13.2.0
